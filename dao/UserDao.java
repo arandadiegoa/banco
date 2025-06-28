@@ -5,5 +5,5 @@ import TP_Banco.dao.dto.UserDto;
 
 public interface UserDao {
     void create(UserDto user)throws ErrorConexionDB;
-    void searchUsers(String email, String pass);
+    int searchUsers(String email, String pass);
 }

@@ -32,20 +32,24 @@ public class UserDaoImpl implements UserDao {
 
     }
     @Override
-    public void searchUsers(String email, String pass) {
+    public int searchUsers(String email, String pass) {
+        //Identificar al usuario
+        int userId = -1; //valor inicial por defecto
 
         try {
             Connection conn = DataBaseConexion.getInstance().getConexion();
             String sql= "SELECT * FROM users WHERE email= ? AND pass= ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
 
+            //Reemplazo lo valores para evitar SQL Injection.
             stmt.setString(1, email);
             stmt.setString(2, pass);
 
             ResultSet rs = stmt.executeQuery();
 
             if(rs.next()){
-                System.out.println("Bienvenido : " + rs.getString("name"));
+               userId = rs.getInt("id");
+                System.out.println("Bienvenido : " + rs.getString("name") + " su identificacion es: " + userId );
             }else {
                 System.out.println("Usuario no registrado, debe registrarse");
 
@@ -54,13 +58,12 @@ public class UserDaoImpl implements UserDao {
 
                 UserDao userDao = new UserDaoImpl();
                 userDao.create(new UserDto(name, email, pass));
-
             }
 
         } catch (SQLException | ErrorConexionDB e){
             e.printStackTrace();
         }
-
+        return userId;
     }
 
 }
