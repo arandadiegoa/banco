@@ -1,12 +1,96 @@
 package TP_Banco.dao;
 
+import TP_Banco.Exception.EmailInvalidException;
 import TP_Banco.Exception.ErrorConexionDB;
 import TP_Banco.dao.dto.CuentaDto;
+import TP_Banco.dao.dto.UserDto;
 import TP_Banco.db.DataBaseConexion;
+import TP_Banco.utils.Validator;
 
 import java.sql.*;
+import java.util.Scanner;
 
 public class CuentaDaoImpl implements CuentaDao{
+    UserDao userDao = new UserDaoImpl();
+    UserDto user;
+    CuentaDto cuentaDto;
+    Scanner sc = new Scanner(System.in);
+
+    @Override
+    public void login() {
+
+        user = new UserDto();
+        cuentaDto = new CuentaDto();
+
+        do {
+            System.out.println("Ingrese su email: ");
+            user.setEmail(sc.nextLine());
+            System.out.println("Ingrese su pass: ");
+            user.setPass(sc.nextLine());
+            try {
+                if (!Validator.isEmailFormatValid(user.getEmail()) && !Validator.isPasswordRequirementsValid(user.getPass())) {
+                    throw new EmailInvalidException("No cumple los parametros establecidos");
+                }
+            } catch (EmailInvalidException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+
+        } while (!Validator.isEmailFormatValid(user.getEmail()) && !Validator.isPasswordRequirementsValid(user.getPass()));
+
+       cuentaDto.setUser_id(userDao.searchUsers(user.getEmail(), user.getPass()));
+
+        if(cuentaDto.getUser_id() == -1){
+            System.out.println("No se pudo autenticar ni registrar al usuario");
+            return;
+        }
+
+        //Funcionalidad
+        System.out.println("""
+                Menu de opciones
+                1) Crear cuenta
+                2) Ver saldo
+                3) Depositar efectivo
+                4) Retirar efectivo
+                5) Salir
+                Ingrese la opción deseada: 1, 2, 3, 4, 5
+            """);
+
+        while (true) {
+            int nro = sc.nextInt();
+            switch (nro){
+                case 1:
+                    System.out.println("Crear cuenta");
+                    System.out.println("Ingrese un depósito inicial en pesos");
+                    double saldo = sc.nextDouble();
+                    crearCuenta(new CuentaDto());
+                    break;
+                case 2:
+                    System.out.println("Ver saldo");
+                    verSaldo();
+                    break;
+                case 3:
+                    System.out.println("Depositar efectivo");
+                    System.out.println("Ingrese el saldo a depositar");
+                    double deposito = sc.nextDouble();
+                    depositar(cuentaDto.getUser_id(), deposito);
+                    verSaldo();
+                    break;
+                case 4:
+                    System.out.println("Retirar efectivo");
+                    System.out.println("Ingrese el saldo a retirar");
+                    double retiro = sc.nextDouble();
+                    retirar(cuentaDto.getUser_id(), retiro);
+                    verSaldo();
+                    break;
+                case 5:
+                    System.out.println("Gracias por usar el sistema, hasta la próxima!!");
+                    return;
+                default:
+                    System.out.println("Opción inválida, intente nuevamente");
+            }
+            System.out.println("Ingrese una opción para continuar");
+        }
+    }
 
     @Override
     public void crearCuenta(CuentaDto cuenta) {

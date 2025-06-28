@@ -11,6 +11,7 @@ public class UserDto {
         this.email = email;
         this.pass = pass;
     }
+    public UserDto (){}
 
     public int getId() {
         return id;
@@ -43,4 +44,6 @@ public class UserDto {
     public void setPass(String pass) {
         this.pass = pass;
     }
+
+
 }

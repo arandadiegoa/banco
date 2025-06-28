@@ -8,10 +8,11 @@ import java.util.Scanner;
 
 public class UserDaoImpl implements UserDao {
     Scanner sc = new Scanner(System.in);
+
     @Override
     public void create(UserDto user) {
 
-        try{
+        try {
             Connection conn = DataBaseConexion.getInstance().getConexion();
             String sql = "INSERT INTO users(name, email, pass) VALUES(?,?,?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
@@ -26,44 +27,65 @@ public class UserDaoImpl implements UserDao {
             stmt.close();
             conn.close();
 
-        }catch (SQLException | ErrorConexionDB e){
+        } catch (SQLException | ErrorConexionDB e) {
             e.printStackTrace();
         }
 
     }
+
     @Override
     public int searchUsers(String email, String pass) {
         //Identificar al usuario
-        int userId = -1; //valor inicial por defecto
+        int userId = -1;
 
-        try {
-            Connection conn = DataBaseConexion.getInstance().getConexion();
-            String sql= "SELECT * FROM users WHERE email= ? AND pass= ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        String sql = "SELECT * FROM users WHERE email= ? AND pass= ?";
 
-            //Reemplazo lo valores para evitar SQL Injection.
-            stmt.setString(1, email);
-            stmt.setString(2, pass);
+        try (Connection conn = DataBaseConexion.getInstance().getConexion()) {
 
-            ResultSet rs = stmt.executeQuery();
+            //Realizo busqueda de usuario en la BD
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            if(rs.next()){
-               userId = rs.getInt("id");
-                System.out.println("Bienvenido : " + rs.getString("name") + " su identificacion es: " + userId );
-            }else {
-                System.out.println("Usuario no registrado, debe registrarse");
+                //Reemplazo lo valores para evitar SQL Injection.
+                stmt.setString(1, email);
+                stmt.setString(2, pass);
 
-                System.out.println("Ingrese su nombre: ");
-                String name = sc.nextLine();
-
-                UserDao userDao = new UserDaoImpl();
-                userDao.create(new UserDto(name, email, pass));
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        userId = rs.getInt("id");
+                        System.out.println("Bienvenido : " + rs.getString("name") + " su identificacion es: " + userId);
+                        return userId;
+                    }
+                }
             }
 
-        } catch (SQLException | ErrorConexionDB e){
+            //No lo encuentra
+            System.out.println("Usuario no registrado, debe registrarse");
+            System.out.println("Ingrese su nombre: ");
+            String name = sc.nextLine();
+
+            //Usuario creado
+            create(new UserDto(name, email, pass));
+
+            //Realizo la consulta por el nuevo usuario generado
+
+            try (
+                    Connection conn2 = DataBaseConexion.getInstance().getConexion();
+                    PreparedStatement stmt2 = conn2.prepareStatement(sql)) {
+                stmt2.setString(1, email);
+                stmt2.setString(2, pass);
+
+                try (ResultSet resultSet = stmt2.executeQuery()) {
+
+                    if (resultSet.next()) {
+                        userId = resultSet.getInt("id");
+                        System.out.println("Bienvenido : " + resultSet.getString("name") + " su identificacion es: " + userId);
+                    }
+                }
+
+            }
+        } catch (SQLException | ErrorConexionDB e) {
             e.printStackTrace();
         }
         return userId;
     }
-
 }

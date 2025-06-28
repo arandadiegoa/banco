@@ -3,6 +3,7 @@ package TP_Banco.dao;
 import TP_Banco.dao.dto.CuentaDto;
 
 public interface CuentaDao {
+    void login();
     void crearCuenta(CuentaDto cuenta);
     void verSaldo();
 
