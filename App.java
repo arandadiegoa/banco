@@ -39,31 +39,44 @@ public class App {
                 2) Ver saldo
                 3) Depositar efectivo
                 4) Retirar efectivo
-                Ingrese la opción deseada: 1, 2, 3 o 4
+                5) Salir
+                Ingrese la opción deseada: 1, 2, 3, 4, 5
             """);
-            int nro = sc.nextInt();
 
-            switch (nro){
-                case 1:
-                    System.out.println("Crear cuenta");
-                    System.out.println("Ingrese un depósito inicial en pesos");
-                    double saldo = sc.nextDouble();
-                    cuentaDao.crearCuenta(new CuentaDto(saldo, userId));
-                break;
-                case 2:
-                    System.out.println("Ver saldo");
-                    cuentaDao.verSaldo();
-                break;
-                case 3:
-                    System.out.println("Depositar efectivo");
-                    cuentaDao.verSaldo();
-                break;
-                case 4:
-                    System.out.println("Retirar efectivo");
-                break;
-
-                default:
-                    System.out.println("Opción inválida, intente nuevamente");
+            while (true) {
+                int nro = sc.nextInt();
+                switch (nro){
+                    case 1:
+                        System.out.println("Crear cuenta");
+                        System.out.println("Ingrese un depósito inicial en pesos");
+                        double saldo = sc.nextDouble();
+                        cuentaDao.crearCuenta(new CuentaDto(saldo, userId));
+                        break;
+                    case 2:
+                        System.out.println("Ver saldo");
+                        cuentaDao.verSaldo();
+                    break;
+                    case 3:
+                        System.out.println("Depositar efectivo");
+                        System.out.println("Ingrese el saldo a depositar");
+                        double deposito = sc.nextDouble();
+                        cuentaDao.depositar(userId, deposito);
+                        cuentaDao.verSaldo();
+                        break;
+                    case 4:
+                        System.out.println("Retirar efectivo");
+                        System.out.println("Ingrese el saldo a retirar");
+                        double retiro = sc.nextDouble();
+                        cuentaDao.retirar(userId, retiro);
+                        cuentaDao.verSaldo();
+                        break;
+                    case 5:
+                        System.out.println("Gracias por usar el sistema, hasta la próxima!!");
+                        return;
+                    default:
+                        System.out.println("Opción inválida, intente nuevamente");
+                }
+                System.out.println("Ingrese una opción para continuar");
             }
 
     }

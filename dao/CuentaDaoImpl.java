@@ -35,10 +35,9 @@ public class CuentaDaoImpl implements CuentaDao{
             Connection conn = DataBaseConexion.getInstance().getConexion();
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM cuenta");
-             while (rs.next()){
-                 int id = rs.getInt("id");
+              if(rs.next()){
                  double saldo = rs.getDouble("saldo");
-                 System.out.println("Numero de cuenta: " + id + " tiene un saldo de: " + saldo + " pesos");
+                 System.out.println("Saldo disponible: " + saldo + " pesos");
              }
              //Libero recursos
              rs.close();
@@ -49,4 +48,47 @@ public class CuentaDaoImpl implements CuentaDao{
             e.printStackTrace();
         }
     }
+
+    @Override
+    public double depositar(int userId, double newSaldo) {
+        try{
+            Connection conn = DataBaseConexion.getInstance().getConexion();
+            String sql = "UPDATE cuenta SET saldo = saldo + ? WHERE user_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setDouble(1, newSaldo);
+            stmt.setInt(2, userId);
+
+            int filas = stmt.executeUpdate();
+            if(filas >0){
+                System.out.println("Saldo depositado correctamente: " + newSaldo + " pesos.");
+            }
+            stmt.close();
+            conn.close();
+        }catch (SQLException | ErrorConexionDB e){
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    @Override
+    public double retirar(int userId, double newSaldo) {
+        try{
+            Connection conn = DataBaseConexion.getInstance().getConexion();
+            String sql = "UPDATE cuenta SET saldo = saldo - ? WHERE user_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setDouble(1, newSaldo);
+            stmt.setInt(2, userId);
+
+            int filas = stmt.executeUpdate();
+            if(filas >0){
+                System.out.println("Saldo retirado correctamente: " + newSaldo + " pesos.");
+            }
+            stmt.close();
+            conn.close();
+        }catch (SQLException | ErrorConexionDB e){
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
 }
