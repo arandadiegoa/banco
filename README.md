@@ -18,6 +18,7 @@ Patrón Singleton para la conexión única a la base
 
 JUnit 5 para test unitarios
 
+---
 
 🧐 Patrones y principios aplicados
 
@@ -44,6 +45,8 @@ Consulta de saldos
 Creación de cuentas
 
 Obtener cuentas por usuario
+
+---
 
 🔧 Funcionalidades
 
