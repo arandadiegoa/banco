@@ -5,7 +5,9 @@ public class CuentaDto {
     private double saldo;
     private int user_id;
 
-    public CuentaDto() {
+    public CuentaDto(double saldo, int user_id) {
+        this.saldo = saldo;
+        this.user_id = user_id;
     }
 
     public int getId() {

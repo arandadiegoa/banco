@@ -1,9 +1,8 @@
 package TP_Banco.dao;
 
-import TP_Banco.Exception.EmailInvalidException;
+import TP_Banco.Exception.InvalidIngressException;
 import TP_Banco.Exception.ErrorConexionDB;
 import TP_Banco.dao.dto.CuentaDto;
-import TP_Banco.dao.dto.UserDto;
 import TP_Banco.db.DataBaseConexion;
 import TP_Banco.utils.Validator;
 
@@ -11,38 +10,43 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class CuentaDaoImpl implements CuentaDao{
-    UserDao userDao = new UserDaoImpl();
-    UserDto user;
+    private UserDao userDao;
+    private int userId;
     CuentaDto cuentaDto;
     Scanner sc = new Scanner(System.in);
 
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
+    }
+    public CuentaDaoImpl(){}
+
     @Override
     public void login() {
-
-        user = new UserDto();
-        cuentaDto = new CuentaDto();
+        String email, pass;
 
         do {
             System.out.println("Ingrese su email: ");
-            user.setEmail(sc.nextLine());
+            email = sc.nextLine();
             System.out.println("Ingrese su pass: ");
-            user.setPass(sc.nextLine());
+            pass = sc.nextLine();
             try {
-                if (!Validator.isEmailFormatValid(user.getEmail()) && !Validator.isPasswordRequirementsValid(user.getPass())) {
-                    throw new EmailInvalidException("No cumple los parametros establecidos");
+                if (!Validator.isEmailFormatValid(email) && !Validator.isPasswordRequirementsValid(pass)) {
+                    throw new InvalidIngressException("No cumple los parametros establecidos");
                 }
-            } catch (EmailInvalidException e) {
+            } catch (InvalidIngressException e) {
                 System.out.println("Error: " + e.getMessage());
             }
 
-        } while (!Validator.isEmailFormatValid(user.getEmail()) && !Validator.isPasswordRequirementsValid(user.getPass()));
+        } while (!Validator.isEmailFormatValid(email) && !Validator.isPasswordRequirementsValid(pass));
 
-       cuentaDto.setUser_id(userDao.searchUsers(user.getEmail(), user.getPass()));
+        userId = userDao.searchUsers(email, pass);
 
-        if(cuentaDto.getUser_id() == -1){
+        if(userId == -1){
             System.out.println("No se pudo autenticar ni registrar al usuario");
             return;
         }
+
+        System.out.println("Usuario autenticado con ID: " + userId);
 
         //Funcionalidad
         System.out.println("""
@@ -51,8 +55,9 @@ public class CuentaDaoImpl implements CuentaDao{
                 2) Ver saldo
                 3) Depositar efectivo
                 4) Retirar efectivo
-                5) Salir
-                Ingrese la opción deseada: 1, 2, 3, 4, 5
+                5) Trasnferir
+                6) Salir
+                Ingrese la opción deseada: 1, 2, 3, 4, 5 o 6
             """);
 
         while (true) {
@@ -62,27 +67,31 @@ public class CuentaDaoImpl implements CuentaDao{
                     System.out.println("Crear cuenta");
                     System.out.println("Ingrese un depósito inicial en pesos");
                     double saldo = sc.nextDouble();
-                    crearCuenta(new CuentaDto());
+                    crearCuenta(new CuentaDto(saldo, userId));
                     break;
                 case 2:
                     System.out.println("Ver saldo");
-                    verSaldo();
+                    verSaldo(userId);
                     break;
                 case 3:
                     System.out.println("Depositar efectivo");
                     System.out.println("Ingrese el saldo a depositar");
                     double deposito = sc.nextDouble();
-                    depositar(cuentaDto.getUser_id(), deposito);
-                    verSaldo();
+                    depositar(userId, deposito);
+                    verSaldo(userId);
                     break;
                 case 4:
                     System.out.println("Retirar efectivo");
                     System.out.println("Ingrese el saldo a retirar");
                     double retiro = sc.nextDouble();
-                    retirar(cuentaDto.getUser_id(), retiro);
-                    verSaldo();
+                    retirar(userId, retiro);
+                    verSaldo(userId);
                     break;
                 case 5:
+                    System.out.println("Transferir");
+                    transferir(userId);
+                    break;
+                case 6:
                     System.out.println("Gracias por usar el sistema, hasta la próxima!!");
                     return;
                 default:
@@ -114,19 +123,23 @@ public class CuentaDaoImpl implements CuentaDao{
     }
 
     @Override
-    public void verSaldo() {
+    public void verSaldo(int userId) {
+
+        String sql= "SELECT * FROM cuenta WHERE user_id = ?";
+
         try {
             Connection conn = DataBaseConexion.getInstance().getConexion();
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM cuenta");
-              if(rs.next()){
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+              while (rs.next()){
+                  int cuentaId = rs.getInt("id");
                  double saldo = rs.getDouble("saldo");
-                 System.out.println("Saldo disponible: " + saldo + " pesos");
+                 System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
              }
              //Libero recursos
              rs.close();
-             stmt.close();
-             conn.close();
 
         }catch (SQLException | ErrorConexionDB e){
             e.printStackTrace();
@@ -172,6 +185,72 @@ public class CuentaDaoImpl implements CuentaDao{
         }catch (SQLException | ErrorConexionDB e){
             e.printStackTrace();
         }
+        return 0;
+    }
+
+    @Override
+    public double transferir(int userId) {
+
+        //Ver cuentas
+        String sql= "SELECT * FROM cuenta WHERE user_id = ?";
+        try {
+            Connection conn = DataBaseConexion.getInstance().getConexion();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            System.out.println("Cuentas disponibles");
+            while (rs.next()){
+                int cuentaId = rs.getInt("id");
+                double saldo = rs.getDouble("saldo");
+                System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
+            }
+
+            System.out.println("Ingrese el id de la cuenta origen");
+            int cuentaOrigen = sc.nextInt();
+
+            System.out.println("Ingrese el id de la cuenta origen");
+            int cuentaDestino = sc.nextInt();
+
+            System.out.println("Ingrese el monto a transferir");
+            double dinero = sc.nextDouble();
+
+            //Validar saldo cuenta origen
+            String validarSaldoSql = "SELECT * FROM cuenta WHERE id= ? AND user_id = ?";
+            PreparedStatement stmtValidar = conn.prepareStatement(validarSaldoSql);
+            stmtValidar.setInt(1, cuentaOrigen);
+            stmtValidar.setInt(2, userId);
+            ResultSet rsVerificar = stmtValidar.executeQuery();
+
+            if(rsVerificar.next()){
+                double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
+
+                if(saldoCuentaOrigen >= dinero){
+                    //Retirar
+                    String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
+                    PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
+                    stmtRestar.setDouble(1, dinero);
+                    stmtRestar.setInt(2, cuentaOrigen);
+                    stmtRestar.executeUpdate();
+
+                    //Depositar
+                    String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
+                    PreparedStatement stmtSumar = conn.prepareStatement(sqlDepositarDinero);
+                    stmtSumar.setDouble(1, dinero);
+                    stmtSumar.setInt(2, cuentaDestino);
+                    stmtSumar.executeUpdate();
+
+                    System.out.println("Transferencia exitosa de: " + dinero + " de cuenta " + cuentaOrigen
+                    + " a cuenta " + cuentaDestino);
+                } else {
+                    System.out.println("No tiene saldo suficiente para transferir");
+                }
+            }
+
+        }catch (SQLException | ErrorConexionDB e){
+            e.printStackTrace();
+        }
+
         return 0;
     }
 
