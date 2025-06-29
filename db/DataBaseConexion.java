@@ -1,6 +1,6 @@
 package TP_Banco.db;
 
-import TP_Banco.Exception.ErrorConexionDB;
+import TP_Banco.exception.ErrorConexionDB;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

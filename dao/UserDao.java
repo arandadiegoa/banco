@@ -1,6 +1,6 @@
 package TP_Banco.dao;
 
-import TP_Banco.Exception.ErrorConexionDB;
+import TP_Banco.exception.ErrorConexionDB;
 import TP_Banco.dao.dto.UserDto;
 
 public interface UserDao {

@@ -1,4 +1,4 @@
-package TP_Banco.Exception;
+package TP_Banco.exception;
 
 public class InvalidIngressException extends Exception {
     public InvalidIngressException(String message) {

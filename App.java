@@ -1,5 +1,5 @@
 package TP_Banco;
-import TP_Banco.Exception.ErrorConexionDB;
+import TP_Banco.exception.ErrorConexionDB;
 import TP_Banco.dao.CuentaDaoImpl;
 import TP_Banco.dao.UserDaoImpl;
 

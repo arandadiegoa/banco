@@ -1,4 +1,4 @@
-package TP_Banco.Exception;
+package TP_Banco.exception;
 
 public class ErrorConexionDB extends Exception{
     public ErrorConexionDB(String message){

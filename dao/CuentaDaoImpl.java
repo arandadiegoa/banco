@@ -1,7 +1,7 @@
 package TP_Banco.dao;
 
-import TP_Banco.Exception.InvalidIngressException;
-import TP_Banco.Exception.ErrorConexionDB;
+import TP_Banco.exception.InvalidIngressException;
+import TP_Banco.exception.ErrorConexionDB;
 import TP_Banco.dao.dto.CuentaDto;
 import TP_Banco.db.DataBaseConexion;
 import TP_Banco.utils.Validator;
@@ -90,6 +90,7 @@ public class CuentaDaoImpl implements CuentaDao{
                 case 5:
                     System.out.println("Transferir");
                     transferir(userId);
+                    verSaldo(userId);
                     break;
                 case 6:
                     System.out.println("Gracias por usar el sistema, hasta la próxima!!");
