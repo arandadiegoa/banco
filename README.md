@@ -2,6 +2,7 @@
 
 Este proyecto consiste en un sistema bancario por consola desarrollado en Java. Permite a los usuarios registrarse, iniciar sesión, gestionar cuentas, depositar, retirar, consultar saldos y transferir dinero.
 
+---
 
 📚 Tecnologías y herramientas utilizadas
 
