@@ -67,3 +67,7 @@ Obtener cuentas por usuario
 ✅ Transferir dinero entre cuentas del mismo usuario
 
 ✅ Mensajes de error claros ante fallos
+
+---
+Base de datos
+Se encuentra en db
