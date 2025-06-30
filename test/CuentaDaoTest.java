@@ -1,6 +1,5 @@
 package TP_Banco.test;
 
-import TP_Banco.dao.CuentaDaoImpl;
 import TP_Banco.dao.dto.CuentaDto;
 import TP_Banco.db.DataBaseConexion;
 import TP_Banco.exception.ErrorConexionDB;
