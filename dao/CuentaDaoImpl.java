@@ -7,6 +7,8 @@ import TP_Banco.db.DataBaseConexion;
 import TP_Banco.utils.Validator;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class CuentaDaoImpl implements CuentaDao{
@@ -201,20 +203,43 @@ public class CuentaDaoImpl implements CuentaDao{
             ResultSet rs = stmt.executeQuery();
 
             System.out.println("Cuentas disponibles");
+
+            List<Integer>idCuentasUsuario = new ArrayList<>(); //Guardar las cuentas del usuario
             while (rs.next()){
                 int cuentaId = rs.getInt("id");
                 double saldo = rs.getDouble("saldo");
+                idCuentasUsuario.add(cuentaId);
                 System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
             }
 
-            System.out.println("Ingrese el id de la cuenta origen");
-            int cuentaOrigen = sc.nextInt();
+            int cuentaOrigen = 0;
+            int cuentaDestino = 0;
+            do {
+                System.out.println("Ingrese el id de la cuenta origen");
+                cuentaOrigen = sc.nextInt();
 
-            System.out.println("Ingrese el id de la cuenta origen");
-            int cuentaDestino = sc.nextInt();
+                if(!idCuentasUsuario.contains(cuentaOrigen)){
+                    System.out.println("El nro de cuenta ingresado no corresponde al usuario");
+                    System.out.println("Ingrese nuevamente el nro de cuenta");
+                }
+            }while (!idCuentasUsuario.contains(cuentaOrigen));
+
+            do {
+                System.out.println("Ingrese el id de la cuenta destino");
+                cuentaDestino = sc.nextInt();
+
+                if(!idCuentasUsuario.contains(cuentaDestino)) {
+                    System.out.println("El nro de cuenta ingresado no corresponde al usuario");
+                    System.out.println("Ingrese nuevamente el nro de cuenta");
+                } else if (cuentaDestino == cuentaOrigen) {
+                    System.out.println("No se puede realizar esta operacion con la misma cuenta");
+                }
+
+            }while (!idCuentasUsuario.contains(cuentaDestino) || cuentaDestino == cuentaOrigen);
 
             System.out.println("Ingrese el monto a transferir");
             double dinero = sc.nextDouble();
+
 
             //Validar saldo cuenta origen
             String validarSaldoSql = "SELECT * FROM cuenta WHERE id= ? AND user_id = ?";
