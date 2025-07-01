@@ -45,6 +45,7 @@ public class UserDaoImpl implements UserDao {
         //Identificar al usuario
         int userId = -1;
 
+
         String sql = "SELECT * FROM users WHERE email= ? AND pass= ?";
 
         try (Connection conn = DataBaseConexion.getInstance().getConexion()) {
@@ -67,11 +68,24 @@ public class UserDaoImpl implements UserDao {
 
             //Si No lo encuentra
             System.out.println("Usuario no registrado, debe registrarse y crear una cuenta");
-            System.out.println("Ingrese su nombre: ");
-            String name = sc.nextLine();
+            System.out.println(
+                    "Desea registrarse? \n" +
+                    "1) si \n" +
+                    "2) no \n"
+            );
 
-            //Usuario creado
-            create(new UserDto(name, email, pass));
+            int ingressUser = sc.nextInt();
+            sc.nextLine();
+            if(ingressUser == 1){
+                System.out.println("Ingrese su nombre: ");
+                String name = sc.nextLine();
+                //Usuario creado
+                create(new UserDto(name, email, pass));
+            }else {
+                System.out.println("No puede utilizar el sistema");
+                System.exit(0);
+            }
+
             //Realizo la consulta por el nuevo usuario generado
 
             try (   Connection conn2 = DataBaseConexion.getInstance().getConexion();

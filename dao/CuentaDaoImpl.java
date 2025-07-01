@@ -14,7 +14,6 @@ import java.util.Scanner;
 public class CuentaDaoImpl implements CuentaDao{
     private UserDao userDao;
     private int userId;
-    CuentaDto cuentaDto;
     Scanner sc = new Scanner(System.in);
 
     public void setUserDao(UserDao userDao) {
@@ -64,41 +63,37 @@ public class CuentaDaoImpl implements CuentaDao{
 
         while (true) {
             int nro = sc.nextInt();
-            switch (nro){
-                case 1:
+            switch (nro) {
+                case 1 -> {
                     System.out.println("Crear cuenta");
                     System.out.println("Ingrese un depósito inicial en pesos");
                     double saldo = sc.nextDouble();
                     crearCuenta(new CuentaDto(saldo, userId));
-                    break;
-                case 2:
+                }
+                case 2 -> {
                     System.out.println("Ver saldo");
                     verSaldo(userId);
-                    break;
-                case 3:
+                }
+                case 3 -> {
                     System.out.println("Depositar efectivo");
-                    System.out.println("Ingrese el saldo a depositar");
-                    double deposito = sc.nextDouble();
-                    depositar(userId, deposito);
+                    depositar(userId);
                     verSaldo(userId);
-                    break;
-                case 4:
+                }
+                case 4 -> {
                     System.out.println("Retirar efectivo");
-                    System.out.println("Ingrese el saldo a retirar");
-                    double retiro = sc.nextDouble();
-                    retirar(userId, retiro);
+                    retirar(userId);
                     verSaldo(userId);
-                    break;
-                case 5:
-                    System.out.println("Transferir");
+                }
+                case 5 -> {
+                    System.out.println("Transferencias");
                     transferir(userId);
                     verSaldo(userId);
-                    break;
-                case 6:
+                }
+                case 6 -> {
                     System.out.println("Gracias por usar el sistema, hasta la próxima!!");
                     return;
-                default:
-                    System.out.println("Opción inválida, intente nuevamente");
+                }
+                default -> System.out.println("Opción inválida, intente nuevamente");
             }
             System.out.println("Ingrese una opción para continuar");
         }
@@ -126,6 +121,34 @@ public class CuentaDaoImpl implements CuentaDao{
     }
 
     @Override
+    public List<CuentaDto>verCuentas(int userId) {
+
+        List<CuentaDto> cuentasUsuario = new ArrayList<>(); //Guardar las cuentas del usuario
+        //Ver cuentas
+        String sql = "SELECT * FROM cuenta WHERE user_id = ?";
+        try {
+            Connection conn = DataBaseConexion.getInstance().getConexion();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            System.out.println("Cuentas disponibles");
+
+            while (rs.next()) {
+                int cuentaId = rs.getInt("id");
+                double saldo = rs.getDouble("saldo");
+                int doUserId = rs.getInt("user_id");
+                cuentasUsuario.add(new CuentaDto(cuentaId, saldo, doUserId));
+                System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
+            }
+
+        } catch (SQLException | ErrorConexionDB e) {
+            e.printStackTrace();
+        }
+        return cuentasUsuario;
+    }
+
+    @Override
     public void verSaldo(int userId) {
 
         String sql= "SELECT * FROM cuenta WHERE user_id = ?";
@@ -150,19 +173,60 @@ public class CuentaDaoImpl implements CuentaDao{
     }
 
     @Override
-    public double depositar(int userId, double newSaldo) {
-        try{
-            Connection conn = DataBaseConexion.getInstance().getConexion();
-            String sql = "UPDATE cuenta SET saldo = saldo + ? WHERE user_id = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setDouble(1, newSaldo);
-            stmt.setInt(2, userId);
+    public double depositar(int userId) {
+        //Ver cuentas
+        List<CuentaDto>cuentaDtos = verCuentas(userId);
+        int cuentaOrigen = -1;
+        boolean cuentaValida;
 
-            int filas = stmt.executeUpdate();
-            if(filas >0){
-                System.out.println("Saldo depositado correctamente: " + newSaldo + " pesos.");
+        try{
+
+            Connection conn = DataBaseConexion.getInstance().getConexion();
+
+            do {
+                cuentaValida = false;
+                System.out.println("Ingrese el id de la cuenta origen");
+                cuentaOrigen = sc.nextInt();
+                sc.nextLine();
+
+                for (CuentaDto cuenta : cuentaDtos) {
+
+                    System.out.println("  Comparando con cuenta ID: " + cuenta.getId());
+
+                    if (cuenta.getId() == cuentaOrigen) {
+                        cuentaValida = true;
+                        System.out.println("  ¡Cuenta encontrada y validada!");
+                        break;
+                    }
+                }
+                if (!cuentaValida){
+                    System.out.println("El numero de cuenta ingresado no corresponde. Vuelva a ingresarlo ");
+                }
+
+            }while (!cuentaValida);
+            System.out.println("Ingrese el monto a depositar");
+            double dinero = sc.nextDouble();
+
+            //Validar saldo cuenta origen
+
+            String validarSaldoSql = "SELECT * FROM cuenta WHERE id= ? AND user_id = ?";
+            PreparedStatement stmtValidar = conn.prepareStatement(validarSaldoSql);
+            stmtValidar.setInt(1, cuentaOrigen);
+            stmtValidar.setInt(2, userId);
+            ResultSet rsVerificar = stmtValidar.executeQuery();
+
+            if(rsVerificar.next()) {
+                double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
+                if(saldoCuentaOrigen >= dinero){
+                    //Depositar
+                    String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
+                    PreparedStatement stmtSumar = conn.prepareStatement(sqlDepositarDinero);
+                    stmtSumar.setDouble(1, dinero);
+                    stmtSumar.setInt(2, cuentaOrigen);
+                    stmtSumar.executeUpdate();
+                    System.out.println("Saldo depositado correctamente: " + dinero + " pesos.");
+                }
             }
-            stmt.close();
             conn.close();
         }catch (SQLException | ErrorConexionDB e){
             e.printStackTrace();
@@ -171,20 +235,67 @@ public class CuentaDaoImpl implements CuentaDao{
     }
 
     @Override
-    public double retirar(int userId, double newSaldo) {
-        try{
-            Connection conn = DataBaseConexion.getInstance().getConexion();
-            String sql = "UPDATE cuenta SET saldo = saldo - ? WHERE user_id = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setDouble(1, newSaldo);
-            stmt.setInt(2, userId);
+    public double retirar(int userId) {
+        //Ver cuentas
+        List<CuentaDto>cuentaDtos = verCuentas(userId);
+        int cuentaOrigen = -1;
+        boolean cuentaValida;
 
-            int filas = stmt.executeUpdate();
-            if(filas >0){
-                System.out.println("Saldo retirado correctamente: " + newSaldo + " pesos.");
+        try{
+
+            Connection conn = DataBaseConexion.getInstance().getConexion();
+
+            do {
+                cuentaValida = false;
+                System.out.println("Ingrese el id de la cuenta origen");
+                cuentaOrigen = sc.nextInt();
+                sc.nextLine();
+
+                for (CuentaDto cuenta : cuentaDtos) {
+
+                    System.out.println("  Comparando con cuenta ID: " + cuenta.getId());
+
+                    if (cuenta.getId() == cuentaOrigen) {
+                        cuentaValida = true;
+                        System.out.println("  ¡Cuenta encontrada y validada!");
+                        break;
+                    }
+                }
+                if (!cuentaValida){
+                    System.out.println("El numero de cuenta ingresado no corresponde. Vuelva a ingresarlo ");
+                }
+
+            }while (!cuentaValida);
+
+            System.out.println("Ingrese el monto a retirar");
+            double dinero = sc.nextDouble();
+
+            //Validar saldo cuenta origen
+
+            String validarSaldoSql = "SELECT * FROM cuenta WHERE id= ? AND user_id = ?";
+            PreparedStatement stmtValidar = conn.prepareStatement(validarSaldoSql);
+            stmtValidar.setInt(1, cuentaOrigen);
+            stmtValidar.setInt(2, userId);
+            ResultSet rsVerificar = stmtValidar.executeQuery();
+
+            if(rsVerificar.next()) {
+                double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
+
+                if (saldoCuentaOrigen >= dinero) {
+                    //Retirar
+                    String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
+                    PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
+                    stmtRestar.setDouble(1, dinero);
+                    stmtRestar.setInt(2, cuentaOrigen);
+                    stmtRestar.executeUpdate();
+                    System.out.println("Saldo retirado correctamente: " + dinero + " pesos.");
+                } else {
+                    System.out.println("No se pudo realizar la operación");
+                }
+            }else{
+                System.out.println("No se encontro la cuenta");
             }
-            stmt.close();
-            conn.close();
+
         }catch (SQLException | ErrorConexionDB e){
             e.printStackTrace();
         }
