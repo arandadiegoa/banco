@@ -41,76 +41,98 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public int searchUsers(String email, String pass) {
-        //Identificar al usuario
-        int userId = -1;
+        public int searchUsers(String email, String pass) {
+            //Identificar al usuario
+            int userId = -1;
 
 
-        String sql = "SELECT * FROM users WHERE email= ? AND pass= ?";
+            String sql = "SELECT * FROM users WHERE email= ? AND pass= ?";
 
-        try (Connection conn = DataBaseConexion.getInstance().getConexion()) {
+            try (Connection conn = DataBaseConexion.getInstance().getConexion()) {
 
-            //Realizo busqueda de usuario en la BD
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                //Realizo busqueda de usuario en la BD
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-                //Reemplazo lo valores para evitar SQL Injection.
-                stmt.setString(1, email);
-                stmt.setString(2, pass);
+                    //Reemplazo lo valores para evitar SQL Injection.
+                    stmt.setString(1, email);
+                    stmt.setString(2, pass);
 
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        userId = rs.getInt("id");
-                        System.out.println("Bienvenido : " + rs.getString("name") + " su identificacion es: " + userId);
-                        return userId;
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            userId = rs.getInt("id");
+                            System.out.println("Bienvenido : " + rs.getString("name") + " su identificacion es: " + userId);
+                            return userId;
+                        }
                     }
                 }
-            }
 
-            //Si No lo encuentra
-            System.out.println("Usuario no registrado, debe registrarse y crear una cuenta");
-            System.out.println(
-                    "Desea registrarse? \n" +
-                    "1) si \n" +
-                    "2) no \n"
-            );
+                //Si No lo encuentra
+                System.out.println("Usuario no registrado, debe registrarse y crear una cuenta");
+                System.out.println(
+                        "Desea registrarse? \n" +
+                        "1) si \n" +
+                        "2) no \n"
+                );
 
-            int ingressUser = sc.nextInt();
-            sc.nextLine();
-            if(ingressUser == 1){
-                System.out.println("Ingrese su nombre: ");
-                String name = sc.nextLine();
-                //Usuario creado
-                create(new UserDto(name, email, pass));
-            }else {
-                System.out.println("No puede utilizar el sistema");
-                System.exit(0);
-            }
+                int ingressUser = sc.nextInt();
+                sc.nextLine();
+                if(ingressUser == 1){
+                    System.out.println("Ingrese su nombre: ");
+                    String name = sc.nextLine();
+                    //Usuario creado
+                    create(new UserDto(name, email, pass));
+                }else {
+                    System.out.println("No puede utilizar el sistema");
+                    System.exit(0);
+                }
 
-            //Realizo la consulta por el nuevo usuario generado
+                //Realizo la consulta por el nuevo usuario generado
 
-            try (   Connection conn2 = DataBaseConexion.getInstance().getConexion();
-                    PreparedStatement stmt2 = conn2.prepareStatement(sql)) {
+                try (   Connection conn2 = DataBaseConexion.getInstance().getConexion();
+                        PreparedStatement stmt2 = conn2.prepareStatement(sql)) {
 
-                    stmt2.setString(1, email);
-                    stmt2.setString(2, pass);
+                        stmt2.setString(1, email);
+                        stmt2.setString(2, pass);
 
-                try (ResultSet resultSet = stmt2.executeQuery()) {
+                    try (ResultSet resultSet = stmt2.executeQuery()) {
 
-                    if (resultSet.next()) {
-                        userId = resultSet.getInt("id");
-                        System.out.println("Bienvenido : " + resultSet.getString("name") + " su identificacion es: " + userId);
+                        if (resultSet.next()) {
+                            userId = resultSet.getInt("id");
+                            System.out.println("Bienvenido : " + resultSet.getString("name") + " su identificacion es: " + userId);
 
-                        System.out.println("Crear cuenta");
-                        System.out.println("Ingrese un depósito inicial en pesos");
-                        double saldo = sc.nextDouble();
-                        cuentaDao.crearCuenta(new CuentaDto(saldo, userId));
+                            System.out.println("Crear cuenta");
+                            System.out.println("Ingrese un depósito inicial en pesos");
+                            double saldo = sc.nextDouble();
+                            cuentaDao.crearCuenta(new CuentaDto(saldo, userId));
+                        }
                     }
                 }
-            }
 
-        } catch (SQLException | ErrorConexionDB e) {
-            e.printStackTrace();
+            } catch (SQLException | ErrorConexionDB e) {
+                e.printStackTrace();
+            }
+            return userId;
         }
-        return userId;
+
+    @Override
+    public String obtenerRolPorId(int userId) {
+        String rol = "";
+        String sql = "SELECT rol FROM users WHERE id = ?";
+
+        try (Connection conn = DataBaseConexion.getInstance().getConexion();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setInt(1, userId);
+                ResultSet rs = stmt.executeQuery();
+
+                if(rs.next()){
+                    rol = rs.getString("rol");
+                }
+            }catch (SQLException | ErrorConexionDB e){
+                e.printStackTrace();
+        }
+
+        return rol;
     }
+
+
 }

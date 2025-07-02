@@ -6,10 +6,13 @@ public class UserDto {
     private String email;
     private String pass;
 
+    private String rol;
+
     public UserDto(String name, String email, String pass) {
         this.name = name;
         this.email = email;
         this.pass = pass;
+        this.rol = "cliente";
     }
     public UserDto (){}
 
@@ -45,5 +48,11 @@ public class UserDto {
         this.pass = pass;
     }
 
+    public String getRol() {
+        return rol;
+    }
 
+    public void setRol(String rol) {
+        this.rol = rol;
+    }
 }

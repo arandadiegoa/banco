@@ -16,6 +16,10 @@ public class CuentaDto {
         this.user_id = user_id;
     }
 
+    public CuentaDto(int user_id) {
+        this.user_id = user_id;
+    }
+
     public int getId() {
         return id;
     }
