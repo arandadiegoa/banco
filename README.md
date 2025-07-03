@@ -68,6 +68,10 @@ Obtener cuentas por usuario
 
 ✅ Mensajes de error claros ante fallos
 
+✅ Visualizar transacciones realizadas
+
+✅ Gestionar cuentas de clientes
+
 ---
 Base de datos
 
