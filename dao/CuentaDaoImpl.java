@@ -14,7 +14,7 @@ import java.util.Scanner;
 
 public class CuentaDaoImpl implements CuentaDao{
     private UserDao userDao;
-    private MovimientoDao movimientoDao = new MovimientoDaoImpl();
+    private final MovimientoDao movimientoDao = new MovimientoDaoImpl();
     Scanner sc = new Scanner(System.in);
 
     public void setUserDao(UserDao userDao) {
@@ -227,7 +227,7 @@ public class CuentaDaoImpl implements CuentaDao{
     public void gestionarCuentasUsuarios(int userId){
         //Ver cuentas
         List<CuentaDto>cuentaDtos = verCuentas(userId);
-        int cuentaOrigen = -1;
+        int cuentaOrigen;
         boolean cuentaValida;
 
         try{
@@ -379,7 +379,7 @@ public class CuentaDaoImpl implements CuentaDao{
     public double depositar(int userId) {
         //Ver cuentas
         List<CuentaDto>cuentaDtos = verCuentas(userId);
-        int cuentaOrigen = -1;
+        int cuentaOrigen;
         boolean cuentaValida;
 
         try{
@@ -467,7 +467,7 @@ public class CuentaDaoImpl implements CuentaDao{
     public double retirar(int userId) {
         //Ver cuentas
         List<CuentaDto>cuentaDtos = verCuentas(userId);
-        int cuentaOrigen = -1;
+        int cuentaOrigen;
         boolean cuentaValida;
 
         try{
@@ -607,8 +607,8 @@ public class CuentaDaoImpl implements CuentaDao{
                     System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
                 }
 
-                int cuentaOrigen = 0;
-                int cuentaDestino = 0;
+                int cuentaOrigen;
+                int cuentaDestino;
 
                 if(idCuentasUsuario.size() > 1){
                     do {
@@ -650,7 +650,7 @@ public class CuentaDaoImpl implements CuentaDao{
 
                         if(saldoCuentaOrigen >= dinero){
 
-                            if (conn == null || conn.isClosed()) {
+                            if (conn.isClosed()) {
                                 conn = DataBaseConexion.getInstance().getConexion();
                             }
 
@@ -671,7 +671,7 @@ public class CuentaDaoImpl implements CuentaDao{
                                     )
                             );
 
-                            if (conn == null || conn.isClosed()) {
+                            if (conn.isClosed()) {
                                 conn = DataBaseConexion.getInstance().getConexion();
                             }
 
