@@ -649,6 +649,11 @@ public class CuentaDaoImpl implements CuentaDao{
                         double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
 
                         if(saldoCuentaOrigen >= dinero){
+
+                            if (conn == null || conn.isClosed()) {
+                                conn = DataBaseConexion.getInstance().getConexion();
+                            }
+
                             //Retirar
                             String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
                             PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
@@ -666,6 +671,9 @@ public class CuentaDaoImpl implements CuentaDao{
                                     )
                             );
 
+                            if (conn == null || conn.isClosed()) {
+                                conn = DataBaseConexion.getInstance().getConexion();
+                            }
 
                             //Depositar
                             String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
