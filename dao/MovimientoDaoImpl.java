@@ -58,4 +58,52 @@ public class MovimientoDaoImpl implements MovimientoDao {
         return movimientos;
     }
 
+    @Override
+    public List<MovimientoDto> obtenerTransaccionesRealizadas() {
+        List<MovimientoDto> movimientos = new ArrayList<>();
+        String sql = "SELECT * FROM movimientos ORDER BY fecha DESC";
+
+        try (Connection conn = DataBaseConexion.getInstance().getConexion();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()){
+                MovimientoDto mov = new MovimientoDto(
+                        rs.getInt("id"),
+                        rs.getInt("cuenta_id"),
+                        rs.getString("tipo"),
+                        rs.getDouble("monto"),
+                        rs.getTimestamp("fecha"),
+                        rs.getString("descripcion")
+                );
+                movimientos.add(mov);
+            }
+
+        }catch (SQLException | ErrorConexionDB e){
+            e.printStackTrace();
+        }
+
+        return movimientos;
+    }
+
+    @Override
+    public void verTransacciones() {
+
+        List<MovimientoDto> movimientos = obtenerTransaccionesRealizadas();
+
+        System.out.println("Transacciones realizadas por el sistema: ");
+
+        if(movimientos.isEmpty()){
+            System.out.println("No se registran movimientos..");
+        }else {
+            for(MovimientoDto mov : movimientos){
+                System.out.println("[" + mov.getFecha() + "] Cuenta " + mov.getCuentaId() +
+                        " - " + mov.getTipo() + " - $" + mov.getMonto() +
+                        " (" + mov.getDescription() + ")");
+            }
+        }
+
+    }
+
+
 }

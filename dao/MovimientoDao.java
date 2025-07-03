@@ -7,4 +7,7 @@ import java.util.List;
 public interface MovimientoDao {
     void registrarMovimientos(MovimientoDto movimiento);
     List<MovimientoDto> obtenerMovimientosIdCuenta(int cuentaId);
+    List<MovimientoDto> obtenerTransaccionesRealizadas();
+    void verTransacciones();
+
 }

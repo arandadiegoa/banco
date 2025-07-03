@@ -66,8 +66,8 @@ public class CuentaDaoImpl implements CuentaDao{
                 switch (nro) {
                     case 1 -> {
                         System.out.println("Transacciones registradas");
-                        double saldo = sc.nextDouble();
-                        crearCuenta(new CuentaDto(saldo, userId));
+                        movimientoDao.verTransacciones();
+
                     }
                     case 2 -> {
                         System.out.println("Reponer saldo");
@@ -79,6 +79,7 @@ public class CuentaDaoImpl implements CuentaDao{
                     }
                     default -> System.out.println("Opción inválida, intente nuevamente");
                 }
+                System.out.println("Ingrese una opción para continuar");
             }
         }else{
             //Funcionalidad
