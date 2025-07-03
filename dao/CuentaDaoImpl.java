@@ -56,7 +56,7 @@ public class CuentaDaoImpl implements CuentaDao{
             System.out.println("""
                 Menu de opciones
                 1) Transacciones registradas
-                2) Reponer saldo
+                2) Habilitar / DesHabilitar cuenta
                 3) Salir
                 Ingrese la opción deseada: 1, 2, 3
             """);
@@ -70,8 +70,11 @@ public class CuentaDaoImpl implements CuentaDao{
 
                     }
                     case 2 -> {
-                        System.out.println("Reponer saldo");
-                        verSaldo(userId);
+                        System.out.println("Habilitar / DesHabilitar cuenta");
+                        System.out.println("Ingrese el id del usuario a gestionar");
+                        int idUser = sc.nextInt();
+                        sc.nextLine();
+                        gestionarCuentasUsuarios(idUser);
                     }
                     case 3 -> {
                         System.out.println("Gracias por usar el sistema, hasta la próxima!!");
@@ -176,11 +179,13 @@ public class CuentaDaoImpl implements CuentaDao{
             while (rs.next()) {
                 int cuentaId = rs.getInt("id");
                 double saldo = rs.getDouble("saldo");
-                int doUserId = rs.getInt("user_id");
-                cuentasUsuario.add(new CuentaDto(cuentaId, saldo, doUserId));
-                System.out.println("Cuentas disponibles");
+                int dbUserId = rs.getInt("user_id");
+                String status = rs.getString("estado");
+                cuentasUsuario.add(new CuentaDto(cuentaId, saldo, dbUserId));
+                System.out.println("Cuentas disponibles: ");
                 if(saldo > 0){
                     System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
+                    System.out.println("Estado: " + status);
                 }else{
                     System.out.println("Saldo insuficiente");
                 }
@@ -219,6 +224,122 @@ public class CuentaDaoImpl implements CuentaDao{
         }
     }
 
+    public void gestionarCuentasUsuarios(int userId){
+        //Ver cuentas
+        List<CuentaDto>cuentaDtos = verCuentas(userId);
+        int cuentaOrigen = -1;
+        boolean cuentaValida;
+
+        try{
+
+            Connection conn = DataBaseConexion.getInstance().getConexion();
+            if(cuentaDtos.size() > 1){
+                do {
+                    cuentaValida = false;
+                    System.out.println("Ingrese el id de la cuenta origen");
+                    cuentaOrigen = sc.nextInt();
+                    sc.nextLine();
+
+                    for (CuentaDto cuenta : cuentaDtos) {
+
+                        System.out.println("Comparando con cuenta ID: " + cuenta.getId());
+
+                        if (cuenta.getId() == cuentaOrigen) {
+                            cuentaValida = true;
+                            System.out.println("  ¡Cuenta encontrada y validada!");
+                            break;
+                        }
+                    }
+                    if (!cuentaValida) {
+                        System.out.println("El numero de cuenta ingresado no corresponde. Vuelva a ingresarlo ");
+                    }
+
+                }while (!cuentaValida);
+
+                System.out.println(
+                        "Ingrese la opcion deseada: \n" +
+                        "1) Habilitar cuenta \n" +
+                            "2) Deshabilitar cuenta \n" +
+                                "3)Borrar cuenta"
+                );
+                int opcionSeleccionada = sc.nextInt();
+                sc.nextLine();
+
+                if(opcionSeleccionada == 1){
+                    // Habilitar cuenta
+                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ? + WHERE id= ?";
+                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
+                    stmt.setString(1, "activa");
+                    stmt.setInt(2, cuentaOrigen);
+                    stmt.executeUpdate();
+                }else if(opcionSeleccionada == 2){
+                    // Deshabilitar cuenta
+                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ? + WHERE id= ?";
+                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
+                    stmt.setString(1, "bloqueada");
+                    stmt.setInt(2, cuentaOrigen);
+                    stmt.executeUpdate();
+                }else{
+                    //Cerrar cuenta
+                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ? + WHERE id= ?";
+                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
+                    stmt.setString(1, "cerrada");
+                    stmt.setInt(2, cuentaOrigen);
+                    stmt.executeUpdate();
+                }
+            } else{
+                System.out.println(
+                        "Ingrese la opcion deseada: \n" +
+                                "1) Habilitar cuenta \n" +
+                                "2) Deshabilitar cuenta \n" +
+                                "3) Cerrar cuenta"
+                );
+
+                int cuentaId = cuentaDtos.get(0).getId();
+                int opcionSeleccionada = sc.nextInt();
+                sc.nextLine();
+
+
+                String[] estados = new String[3];
+                estados[0] = "activa";
+                estados[1] = "bloqueada";
+                estados[2] = "cerrada";
+
+
+                if(opcionSeleccionada == 1){
+                    // Habilitar cuenta
+                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ?  WHERE id= ?";
+                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
+                    stmt.setString(1, estados[0]);
+                    stmt.setInt(2, cuentaId);
+                    stmt.executeUpdate();
+                    System.out.println("La cuenta se encuentra: " + estados[0]);
+
+                }else if(opcionSeleccionada == 2){
+                    // Deshabilitar cuenta
+                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ?  WHERE id= ?";
+                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
+                    stmt.setString(1, estados[1]);
+                    stmt.setInt(2, cuentaId);
+                    stmt.executeUpdate();
+                    System.out.println("La cuenta se encuentra: " + estados[1]);
+
+                }else{
+                    //Cerrar cuenta
+                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ?  WHERE id= ?";
+                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
+                    stmt.setString(1, estados[2]);
+                    stmt.setInt(2, cuentaId);
+                    stmt.executeUpdate();
+                    System.out.println("La cuenta se encuentra: " + estados[2]);
+                }
+
+            }
+        }catch (SQLException | ErrorConexionDB e){
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void verSaldo(int userId) {
 
@@ -234,8 +355,10 @@ public class CuentaDaoImpl implements CuentaDao{
                 while (rs.next()) {
                     int cuentaId = rs.getInt("id");
                     double saldo = rs.getDouble("saldo");
+                    String status = rs.getString("estado");
                     tieneDatos = true;
                     System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
+                    System.out.println("Estado: " + status);
                 }
 
                 if(!tieneDatos){

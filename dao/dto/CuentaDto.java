@@ -5,6 +5,8 @@ public class CuentaDto {
     private double saldo;
     private int user_id;
 
+    private String status;
+
     public CuentaDto(int id, double saldo, int user_id) {
         this.id = id;
         this.saldo = saldo;
@@ -42,5 +44,13 @@ public class CuentaDto {
 
     public void setUser_id(int user_id) {
         this.user_id = user_id;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
