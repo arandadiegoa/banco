@@ -8,19 +8,19 @@ public class UserDaoTest {
     @Test
     public void testLoguinCorrectUsers(){
         UserDao userDao = new UserDaoImpl();
-        String mail = "elcuervo@gmail.com";
+        String email = "elcuervo@gmail.com";
         String pass = "1234";
 
-        int userId = userDao.searchUsers(mail, pass);
+        int userId = userDao.searchUsers(email, pass);
         assertTrue(userId > 0, "El usuario deberia estar registrado y contar con un id válido");
     }
     @Test
     public void testLoguinIncorrectUsers(){
         UserDao userDao = new UserDaoImpl();
-        String mail = "pepe@pepe.com";
+        String email = "pepe@pepe.com";
         String pass = "123456";
 
-        int userId = userDao.searchUsers(mail, pass);
+        int userId = userDao.searchUsers(email, pass);
         assertEquals(-1, userId, "Usuario no registrado, debe registrarse y crear una cuenta");
     }
 }

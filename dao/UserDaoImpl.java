@@ -41,10 +41,9 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-        public int searchUsers(String email, String pass) {
+        public int searchUsers( String email, String pass ) {
             //Identificar al usuario
             int userId = -1;
-
 
             String sql = "SELECT * FROM users WHERE email= ? AND pass= ?";
 

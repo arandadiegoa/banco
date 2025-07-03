@@ -1,5 +1,6 @@
 package TP_Banco.dao;
 
+import TP_Banco.dao.dto.MovimientoDto;
 import TP_Banco.exception.InvalidIngressException;
 import TP_Banco.exception.ErrorConexionDB;
 import TP_Banco.dao.dto.CuentaDto;
@@ -13,7 +14,7 @@ import java.util.Scanner;
 
 public class CuentaDaoImpl implements CuentaDao{
     private UserDao userDao;
-    private int userId;
+    private MovimientoDao movimientoDao = new MovimientoDaoImpl();
     Scanner sc = new Scanner(System.in);
 
     public void setUserDao(UserDao userDao) {
@@ -40,7 +41,8 @@ public class CuentaDaoImpl implements CuentaDao{
 
         } while (!Validator.isEmailFormatValid(email) && !Validator.isPasswordRequirementsValid(pass));
 
-        userId = userDao.searchUsers(email, pass);
+
+        int userId = userDao.searchUsers(email, pass);
 
         if(userId == -1){
             System.out.println("No se pudo autenticar ni registrar al usuario");
@@ -97,6 +99,7 @@ public class CuentaDaoImpl implements CuentaDao{
                 switch (nro) {
                     case 1 -> {
                         System.out.println("Crear cuenta");
+                        System.out.println("Ingrese el monto en pesos");
                         double saldo = sc.nextDouble();
                         crearCuenta(new CuentaDto(saldo, userId));
                     }
@@ -108,6 +111,7 @@ public class CuentaDaoImpl implements CuentaDao{
                         System.out.println("Depositar efectivo");
                         depositar(userId);
                         verSaldo(userId);
+
                     }
                     case 4 -> {
                         System.out.println("Retirar efectivo");
@@ -117,12 +121,10 @@ public class CuentaDaoImpl implements CuentaDao{
                     case 5 -> {
                         System.out.println("Transferencias");
                         transferir(userId);
-                        verSaldo(userId);
                     }
                     case 6 -> {
                         System.out.println("Ver movimientos");
-                        transferir(userId);
-                        verSaldo(userId);
+                        verMovimientosUserId(userId);
                     }
                     case 7 -> {
                         System.out.println("Gracias por usar el sistema, hasta la próxima!!");
@@ -133,6 +135,7 @@ public class CuentaDaoImpl implements CuentaDao{
                 System.out.println("Ingrese una opción para continuar");
             }
         }
+
     }
 
     @Override
@@ -175,13 +178,44 @@ public class CuentaDaoImpl implements CuentaDao{
                 int doUserId = rs.getInt("user_id");
                 cuentasUsuario.add(new CuentaDto(cuentaId, saldo, doUserId));
                 System.out.println("Cuentas disponibles");
-                System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
+                if(saldo > 0){
+                    System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
+                }else{
+                    System.out.println("Saldo insuficiente");
+                }
             }
 
         } catch (SQLException | ErrorConexionDB e) {
             e.printStackTrace();
         }
         return cuentasUsuario;
+    }
+
+    @Override
+    public void verMovimientosUserId(int userId) {
+        List<CuentaDto> cuentas = verCuentas(userId);
+
+        if(cuentas.isEmpty()){
+            System.out.println("No tiene cuentas registradas");
+            return;
+        }
+
+        for (CuentaDto cuenta : cuentas){
+            int cuentaId = cuenta.getId();
+
+            List<MovimientoDto> movimientos = movimientoDao.obtenerMovimientosIdCuenta(cuentaId);
+            System.out.println("Mivimientos de la cuenta nro: " + cuentaId);
+
+            if(movimientos.isEmpty()){
+                System.out.println("No tiene movimientos registrados");
+            }else{
+                for(MovimientoDto mov : movimientos){
+                    System.out.println("  [" + mov.getFecha() + "] " +
+                            mov.getTipo() + " - $" + mov.getMonto() +
+                            " (" + mov.getDescription() + ")");
+                }
+            }
+        }
     }
 
     @Override
@@ -194,17 +228,18 @@ public class CuentaDaoImpl implements CuentaDao{
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
+
             boolean tieneDatos = false;
                 while (rs.next()) {
-                    tieneDatos = true;
                     int cuentaId = rs.getInt("id");
                     double saldo = rs.getDouble("saldo");
+                    tieneDatos = true;
                     System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
+                }
 
-                    if(!tieneDatos){
-                        //Si no tiene cuenta
-                        System.out.println("Debe crear cuenta y realizar un deposito");
-                    }
+                if(!tieneDatos){
+                    //Si no tiene cuenta
+                    System.out.println("Debe crear cuenta y realizar un deposito");
                 }
 
 
@@ -243,64 +278,60 @@ public class CuentaDaoImpl implements CuentaDao{
                             break;
                         }
                     }
-                    if (!cuentaValida){
+                    if (!cuentaValida) {
                         System.out.println("El numero de cuenta ingresado no corresponde. Vuelva a ingresarlo ");
                     }
 
-                    System.out.println("Ingrese el monto a depositar");
-                    double dinero = sc.nextDouble();
-                    sc.nextLine();
-                    //Validar saldo cuenta origen
-
-                    String validarSaldoSql = "SELECT * FROM cuenta WHERE user_id = ?";
-                    PreparedStatement stmtValidar = conn.prepareStatement(validarSaldoSql);
-                    stmtValidar.setInt(1, userId);
-                    ResultSet rsVerificar = stmtValidar.executeQuery();
-
-                    if(rsVerificar.next()) {
-                        double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
-                        if(saldoCuentaOrigen >= dinero){
-                            //Depositar
-                            String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
-                            PreparedStatement stmtSumar = conn.prepareStatement(sqlDepositarDinero);
-                            stmtSumar.setDouble(1, dinero);
-                            stmtSumar.setInt(2, cuentaOrigen);
-                            stmtSumar.executeUpdate();
-                            System.out.println("Saldo depositado correctamente: " + dinero + " pesos.");
-                        }
-                    }
-                    conn.close();
-
                 }while (!cuentaValida);
+
+                System.out.println("Ingrese el monto a depositar");
+                double dinero = sc.nextDouble();
+                sc.nextLine();
+
+                // Depositar
+                String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
+                PreparedStatement stmtSumar = conn.prepareStatement(sqlDepositarDinero);
+                stmtSumar.setDouble(1, dinero);
+                stmtSumar.setInt(2, cuentaOrigen);
+                stmtSumar.executeUpdate();
+
+                //Registro de movimientos
+                MovimientoDto movimiento = new MovimientoDto(
+                        cuentaOrigen,
+                        "Deposito",
+                        dinero,
+                        "Deposito realizado en cuenta"
+                );
+
+                movimientoDao.registrarMovimientos(movimiento);
+
             }else {
 
                 System.out.println("Ingrese el monto a depositar");
                 double dinero = sc.nextDouble();
                 sc.nextLine();
-                //Validar saldo cuenta origen
-
-                String validarSaldoSql = "SELECT * FROM cuenta WHERE user_id = ?";
-                PreparedStatement stmtValidar = conn.prepareStatement(validarSaldoSql);
-                stmtValidar.setInt(1, userId);
-                ResultSet rsVerificar = stmtValidar.executeQuery();
 
                 int cuentaId = cuentaDtos.get(0).getId();
 
-                if(rsVerificar.next()) {
-                    double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
-                    if(saldoCuentaOrigen >= dinero){
                         //Depositar
                         String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
                         PreparedStatement stmtSumar = conn.prepareStatement(sqlDepositarDinero);
                         stmtSumar.setDouble(1, dinero);
                         stmtSumar.setInt(2, cuentaId);
                         stmtSumar.executeUpdate();
-                        System.out.println("Saldo depositado correctamente: " + dinero + " pesos.");
-                    }
-                }
+
+                        //Registro de movimientos
+                        MovimientoDto movimiento = new MovimientoDto(
+                                cuentaId,
+                            "Deposito",
+                                dinero,
+                                "Deposito realizado en cuenta"
+                        );
+
+                    movimientoDao.registrarMovimientos(movimiento);
+                System.out.println("Saldo depositado correctamente: " + dinero + " pesos.");
                 conn.close();
             }
-
 
         }catch (SQLException | ErrorConexionDB e){
             e.printStackTrace();
@@ -341,10 +372,6 @@ public class CuentaDaoImpl implements CuentaDao{
 
                     }while (!cuentaValida);
 
-
-                    System.out.println("Ingrese el monto a retirar");
-                    double dinero = sc.nextDouble();
-
                     //Validar saldo cuenta origen
 
                     String validarSaldoSql = "SELECT * FROM cuenta WHERE id= ? AND user_id = ?";
@@ -356,24 +383,38 @@ public class CuentaDaoImpl implements CuentaDao{
                     if(rsVerificar.next()) {
                         double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
 
-                        if (saldoCuentaOrigen >= dinero) {
-                            //Retirar
-                            String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
-                            PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
-                            stmtRestar.setDouble(1, dinero);
-                            stmtRestar.setInt(2, cuentaOrigen);
-                            stmtRestar.executeUpdate();
-                            System.out.println("Saldo retirado correctamente: " + dinero + " pesos.");
+                        if (saldoCuentaOrigen > 0) {
+                            System.out.println("Ingrese el monto a retirar");
+                            double dinero = sc.nextDouble();
+
+                            if(saldoCuentaOrigen >= dinero){
+                                //Retirar
+                                String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
+                                PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
+                                stmtRestar.setDouble(1, dinero);
+                                stmtRestar.setInt(2, cuentaOrigen);
+                                stmtRestar.executeUpdate();
+
+                                //Registro de movimientos
+                                MovimientoDto movimiento = new MovimientoDto(
+                                        cuentaOrigen,
+                                        "Retiro",
+                                        dinero,
+                                        "Retiro realizado en cuenta"
+                                );
+
+                                movimientoDao.registrarMovimientos(movimiento);
+
+                                System.out.println("Saldo retirado correctamente: " + dinero + " pesos.");
+                            }
+
                         } else {
-                            System.out.println("No se pudo realizar la operación");
+                            System.out.println("No se pudo realizar la operación, saldo insuficiente");
                         }
                     }else{
                         System.out.println("No se encontro la cuenta");
                     }
                 }else {
-                    System.out.println("Ingrese el monto a retirar");
-                    double dinero = sc.nextDouble();
-                    sc.nextLine();
                     //Validar saldo cuenta origen
 
                     String validarSaldoSql = "SELECT * FROM cuenta WHERE user_id = ?";
@@ -385,14 +426,30 @@ public class CuentaDaoImpl implements CuentaDao{
 
                     if(rsVerificar.next()) {
                         double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
-                        if(saldoCuentaOrigen >= dinero){
-                            //Depositar
-                            String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
-                            PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
-                            stmtRestar.setDouble(1, dinero);
-                            stmtRestar.setInt(2, cuentaId);
-                            stmtRestar.executeUpdate();
-                            System.out.println("Saldo retirado correctamente: " + dinero + " pesos.");
+                        if(saldoCuentaOrigen > 0){
+                            System.out.println("Ingrese el monto a retirar");
+                            double dinero = sc.nextDouble();
+                            sc.nextLine();
+                            if(saldoCuentaOrigen >= dinero){
+                                //Retirar
+                                String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
+                                PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
+                                stmtRestar.setDouble(1, dinero);
+                                stmtRestar.setInt(2, cuentaId);
+                                stmtRestar.executeUpdate();
+
+                                //Registro de movimientos
+                                MovimientoDto movimiento = new MovimientoDto(
+                                        cuentaId,
+                                        "Retiro",
+                                        dinero,
+                                        "Retiro realizado en cuenta"
+                                );
+
+                                movimientoDao.registrarMovimientos(movimiento);
+
+                                System.out.println("Saldo retirado correctamente: " + dinero + " pesos.");
+                            }
                         }
                     }
                     conn.close();
@@ -475,6 +532,17 @@ public class CuentaDaoImpl implements CuentaDao{
                             stmtRestar.setInt(2, cuentaOrigen);
                             stmtRestar.executeUpdate();
 
+                            // En la cuenta origen
+                            movimientoDao.registrarMovimientos(
+                                    new MovimientoDto(
+                                            cuentaOrigen,
+                                            "TRANSFERENCIA_ENVIADA",
+                                            dinero,
+                                            "Transferencia a cuenta " + cuentaDestino
+                                    )
+                            );
+
+
                             //Depositar
                             String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
                             PreparedStatement stmtSumar = conn.prepareStatement(sqlDepositarDinero);
@@ -482,13 +550,25 @@ public class CuentaDaoImpl implements CuentaDao{
                             stmtSumar.setInt(2, cuentaDestino);
                             stmtSumar.executeUpdate();
 
+                            // En la cuenta destino
+                            movimientoDao.registrarMovimientos(
+                                    new MovimientoDto(
+                                            cuentaDestino,
+                                            "TRANSFERENCIA_ENVIADA",
+                                            dinero,
+                                            "Transferencia a cuenta " + cuentaOrigen
+                                    )
+                            );
+
                             System.out.println("Transferencia exitosa de: " + dinero + " de cuenta " + cuentaOrigen
                                     + " a cuenta " + cuentaDestino);
                         } else {
-                            System.out.println("No tiene saldo suficiente para transferir");
+                            System.out.println("Solo tiene una cuenta asociada");
                         }
                     }
 
+                }else {
+                    System.out.println("Solo tiene una cuenta, no puede transferir");
                 }
 
         }catch (SQLException | ErrorConexionDB e){

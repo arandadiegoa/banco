@@ -12,4 +12,5 @@ public interface CuentaDao {
     double retirar(int userId);
     double transferir(int userId);
     List<CuentaDto>verCuentas(int userId);
+    void verMovimientosUserId(int userId);
 }

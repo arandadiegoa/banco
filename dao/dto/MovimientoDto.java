@@ -19,6 +19,14 @@ public class MovimientoDto {
         this.description = description;
     }
 
+    //Para insertar movimientos
+    public MovimientoDto(int cuentaId, String tipo, double monto, String description) {
+        this.cuentaId = cuentaId;
+        this.tipo = tipo;
+        this.monto = monto;
+        this.description = description;
+    }
+
     public int getId() {
         return id;
     }

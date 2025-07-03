@@ -15,7 +15,7 @@ public class MovimientoDaoImpl implements MovimientoDao {
 
     @Override
     public void registrarMovimientos(MovimientoDto movimiento) {
-        String sql = "INSERT INTO movimientos (cuenta_id, tipo, monto, descripcion) VALUES ?,?,?,?)";
+        String sql = "INSERT INTO movimientos (cuenta_id, tipo, monto, descripcion) VALUES (?,?,?,?)";
         try(Connection conn = DataBaseConexion.getInstance().getConexion();
             PreparedStatement stmt = conn.prepareStatement(sql))
         {
@@ -33,7 +33,7 @@ public class MovimientoDaoImpl implements MovimientoDao {
     @Override
     public List<MovimientoDto> obtenerMovimientosIdCuenta(int cuentaId) {
         List<MovimientoDto> movimientos = new ArrayList<>();
-        String sql = "SELECT * FROM movimientos WHERE cuenta_id = ? ORDER_BY fecha DESC";
+        String sql = "SELECT * FROM movimientos WHERE cuenta_id = ? ORDER BY fecha DESC";
 
         try (Connection conn = DataBaseConexion.getInstance().getConexion();
         PreparedStatement stmt = conn.prepareStatement(sql))
@@ -57,4 +57,5 @@ public class MovimientoDaoImpl implements MovimientoDao {
         }
         return movimientos;
     }
+
 }

@@ -12,8 +12,10 @@ public class App {
         userDao.setCuentaDao(cuentaDao);
         cuentaDao.setUserDao(userDao);
 
+
         //LOGUIN
         System.out.println("Para ingresar deberá autenticarse, ingrese email y password");
         cuentaDao.login();
+
     }
 }
