@@ -68,6 +68,9 @@ Obtener cuentas por usuario
 
 ✅ Mensajes de error claros ante fallos
 
+✅ Como Empleado podes ver transacciones realizdas, gestionar cuentas de clientes
+
+
 ---
 Base de datos
 
