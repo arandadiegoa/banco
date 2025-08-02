@@ -11,7 +11,7 @@ public class UserDaoTest {
         String email = "elcuervo@gmail.com";
         String pass = "1234";
 
-        int userId = userDao.searchUsers(email, pass);
+        int userId = userDao.findUserId(email, pass);
         assertTrue(userId > 0, "El usuario deberia estar registrado y contar con un id válido");
     }
     @Test
@@ -20,7 +20,7 @@ public class UserDaoTest {
         String email = "pepe@pepe.com";
         String pass = "123456";
 
-        int userId = userDao.searchUsers(email, pass);
+        int userId = userDao.findUserId(email, pass);
         assertEquals(-1, userId, "Usuario no registrado, debe registrarse y crear una cuenta");
     }
 }

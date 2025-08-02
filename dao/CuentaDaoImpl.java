@@ -1,12 +1,14 @@
 package TP_Banco.dao;
 
+import TP_Banco.dao.dto.LoginResult;
 import TP_Banco.dao.dto.MovimientoDto;
-import TP_Banco.exception.InvalidIngressException;
 import TP_Banco.exception.ErrorConexionDB;
 import TP_Banco.dao.dto.CuentaDto;
 import TP_Banco.db.DataBaseConexion;
-import TP_Banco.utils.Validator;
 
+
+import javax.swing.*;
+import java.awt.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,128 +24,24 @@ public class CuentaDaoImpl implements CuentaDao{
     }
     public CuentaDaoImpl(){}
 
-    @Override
-    public void login() {
-        String email, pass;
+    //Implementacion de login
+    public LoginResult login(String email, String pass){
+        try {
 
-        do {
-            System.out.println("Ingrese su email: ");
-            email = sc.nextLine();
-            System.out.println("Ingrese su pass: ");
-            pass = sc.nextLine();
-            try {
-                if (!Validator.isEmailFormatValid(email) && !Validator.isPasswordRequirementsValid(pass)) {
-                    throw new InvalidIngressException("No cumple los parametros establecidos");
-                }
-            } catch (InvalidIngressException e) {
-                System.out.println("Error: " + e.getMessage());
+            int userId = userDao.findUserId(email, pass);
+            if(userId == -1){
+                return new LoginResult(-1, null, false, "Credenciales incorrectas");
             }
 
-        } while (!Validator.isEmailFormatValid(email) && !Validator.isPasswordRequirementsValid(pass));
+            String rol = userDao.obtenerRolPorId(userId);
 
-
-        int userId = userDao.searchUsers(email, pass);
-
-        if(userId == -1){
-            System.out.println("No se pudo autenticar ni registrar al usuario");
-            return;
+            return new LoginResult(userId, rol, true, null);
+        }catch (Exception e) {
+            return new LoginResult(-1, null, false, "Error en el login: " + e.getMessage());
         }
-
-        String rol = userDao.obtenerRolPorId(userId);
-        if("empleado".equalsIgnoreCase(rol)){
-
-            //Funcionalidad
-            System.out.println("""
-                Menu de opciones
-                1) Transacciones registradas
-                2) Habilitar / DesHabilitar cuenta
-                3) Salir
-                Ingrese la opción deseada: 1, 2, 3
-            """);
-
-            while (true) {
-                int nro = sc.nextInt();
-                switch (nro) {
-                    case 1 -> {
-                        System.out.println("Transacciones registradas");
-                        movimientoDao.verTransacciones();
-
-                    }
-                    case 2 -> {
-                        System.out.println("Habilitar / DesHabilitar cuenta");
-                        System.out.println("Ingrese el id del usuario a gestionar");
-                        int idUser = sc.nextInt();
-                        sc.nextLine();
-                        gestionarCuentasUsuarios(idUser);
-                    }
-                    case 3 -> {
-                        System.out.println("Gracias por usar el sistema, hasta la próxima!!");
-                        return;
-                    }
-                    default -> System.out.println("Opción inválida, intente nuevamente");
-                }
-                System.out.println("Ingrese una opción para continuar");
-            }
-        }else{
-            //Funcionalidad
-            System.out.println("""
-                Menu de opciones
-                1) Crear cuenta
-                2) Ver saldo
-                3) Depositar efectivo
-                4) Retirar efectivo
-                5) Transferir
-                6) Ver momimientos
-                7) Salir
-                Ingrese la opción deseada: 1, 2, 3, 4, 5, 6 o 7
-            """);
-
-            while (true) {
-                int nro = sc.nextInt();
-                switch (nro) {
-                    case 1 -> {
-                        System.out.println("Crear cuenta");
-                        System.out.println("Ingrese el monto en pesos");
-                        double saldo = sc.nextDouble();
-                        crearCuenta(new CuentaDto(saldo, userId));
-                    }
-                    case 2 -> {
-                        System.out.println("Ver saldo");
-                        verSaldo(userId);
-                    }
-                    case 3 -> {
-                        System.out.println("Depositar efectivo");
-                        depositar(userId);
-                        verSaldo(userId);
-
-                    }
-                    case 4 -> {
-                        System.out.println("Retirar efectivo");
-                        retirar(userId);
-                        verSaldo(userId);
-                    }
-                    case 5 -> {
-                        System.out.println("Transferencias");
-                        transferir(userId);
-                    }
-                    case 6 -> {
-                        System.out.println("Ver movimientos");
-                        verMovimientosUserId(userId);
-                    }
-                    case 7 -> {
-                        System.out.println("Gracias por usar el sistema, hasta la próxima!!");
-                        return;
-                    }
-                    default -> System.out.println("Opción inválida, intente nuevamente");
-                }
-                System.out.println("Ingrese una opción para continuar");
-            }
-        }
-
     }
 
-    @Override
-    public void crearCuenta(CuentaDto cuenta) {
+    public void crearCuenta(JFrame parent,CuentaDto cuenta) {
 
         try {
             Connection conn = DataBaseConexion.getInstance().getConexion();
@@ -155,19 +53,29 @@ public class CuentaDaoImpl implements CuentaDao{
 
             int filas = stmt.executeUpdate();
             if(filas > 0){
-                System.out.println("Saldo inicial: " + cuenta.getSaldo() + ", asociada al usuario con ID: " + cuenta.getUser_id());
+                JOptionPane.showMessageDialog(parent,
+                        "Saldo inicial: " + cuenta.getSaldo() +
+                                ", asociada al usuario con ID: " + cuenta.getUser_id(),
+                        "Cuenta creada",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
             }
             stmt.close();
             conn.close();
         }catch (SQLException | ErrorConexionDB e){
             e.printStackTrace();
+            JOptionPane.showMessageDialog(parent,
+                    "Error al crear la cuenta: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                    );
         }
     }
-
-    @Override
-    public List<CuentaDto>verCuentas(int userId) {
+    public List<CuentaDto>verCuentas(JFrame parent, int userId) {
 
         List<CuentaDto> cuentasUsuario = new ArrayList<>(); //Guardar las cuentas del usuario
+        StringBuilder mensaje = new StringBuilder();
+
         //Ver cuentas
         String sql = "SELECT * FROM cuenta WHERE user_id = ?";
         try {
@@ -182,166 +90,139 @@ public class CuentaDaoImpl implements CuentaDao{
                 int dbUserId = rs.getInt("user_id");
                 String status = rs.getString("estado");
                 cuentasUsuario.add(new CuentaDto(cuentaId, saldo, dbUserId));
-                System.out.println("Cuentas disponibles: ");
-                if(saldo > 0){
-                    System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
-                    System.out.println("Estado: " + status);
-                }else{
-                    System.out.println("Saldo insuficiente");
-                }
+
+                mensaje.append("Cuenta nro: ").append(cuentaId)
+                        .append(" - Saldo: $").append(saldo)
+                        .append(" - Estado: ").append(status).append("\n");
+
             }
+            if(cuentasUsuario.isEmpty()){
+                JOptionPane.showMessageDialog(parent, "No tiene cuentas registradas.");
+            }else {
+                JOptionPane.showMessageDialog(parent, mensaje.toString(), "Cuentas del usuario", JOptionPane.INFORMATION_MESSAGE);
+            }
+            rs.close();
+            stmt.close();
+            conn.close();
 
         } catch (SQLException | ErrorConexionDB e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(parent,
+                    "Error al recuperar cuentas: " + e.getMessage(),
+                    "Error",
+            JOptionPane.ERROR_MESSAGE);
         }
         return cuentasUsuario;
     }
 
-    @Override
-    public void verMovimientosUserId(int userId) {
-        List<CuentaDto> cuentas = verCuentas(userId);
+
+    public void verMovimientosUserId(JFrame parent, int userId) {
+        List<CuentaDto> cuentas = verCuentas(parent, userId);
 
         if(cuentas.isEmpty()){
-            System.out.println("No tiene cuentas registradas");
+            JOptionPane.showMessageDialog(parent, "No tiene cuentas registradas.");
             return;
         }
+
+        StringBuilder mensajeTotal = new StringBuilder();
 
         for (CuentaDto cuenta : cuentas){
             int cuentaId = cuenta.getId();
 
             List<MovimientoDto> movimientos = movimientoDao.obtenerMovimientosIdCuenta(cuentaId);
-            System.out.println("Mivimientos de la cuenta nro: " + cuentaId);
+            mensajeTotal.append("Movimientos de la cuenta nro: ").append(cuentaId).append("\n");
 
             if(movimientos.isEmpty()){
-                System.out.println("No tiene movimientos registrados");
+                mensajeTotal.append("No tiene movimientos registrados");
             }else{
                 for(MovimientoDto mov : movimientos){
-                    System.out.println("  [" + mov.getFecha() + "] " +
-                            mov.getTipo() + " - $" + mov.getMonto() +
-                            " (" + mov.getDescription() + ")");
+                   mensajeTotal.append(" [").append(mov.getFecha()).append("]")
+                           .append(mov.getTipo()).append(mov.getMonto())
+                           .append(" (").append(mov.getDescription()).append(")\n");
                 }
             }
         }
+        JTextArea textArea = new JTextArea(mensajeTotal.toString());
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(500, 300));
+
+        JOptionPane.showMessageDialog(parent, scrollPane, "Movimientos de cuenta", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public void gestionarCuentasUsuarios(int userId){
+    public void gestionarCuentasUsuariosDesdeGUI(JFrame parent, int userId){
         //Ver cuentas
-        List<CuentaDto>cuentaDtos = verCuentas(userId);
-        int cuentaOrigen;
-        boolean cuentaValida;
+        List<CuentaDto>cuentaDtos = verCuentas(parent, userId);
 
-        try{
-
-            Connection conn = DataBaseConexion.getInstance().getConexion();
-            if(cuentaDtos.size() > 1){
-                do {
-                    cuentaValida = false;
-                    System.out.println("Ingrese el id de la cuenta origen");
-                    cuentaOrigen = sc.nextInt();
-                    sc.nextLine();
-
-                    for (CuentaDto cuenta : cuentaDtos) {
-
-                        System.out.println("Comparando con cuenta ID: " + cuenta.getId());
-
-                        if (cuenta.getId() == cuentaOrigen) {
-                            cuentaValida = true;
-                            System.out.println("  ¡Cuenta encontrada y validada!");
-                            break;
-                        }
-                    }
-                    if (!cuentaValida) {
-                        System.out.println("El numero de cuenta ingresado no corresponde. Vuelva a ingresarlo ");
-                    }
-
-                }while (!cuentaValida);
-
-                System.out.println(
-                        "Ingrese la opcion deseada: \n" +
-                        "1) Habilitar cuenta \n" +
-                            "2) Deshabilitar cuenta \n" +
-                                "3)Borrar cuenta"
-                );
-                int opcionSeleccionada = sc.nextInt();
-                sc.nextLine();
-
-                if(opcionSeleccionada == 1){
-                    // Habilitar cuenta
-                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ? + WHERE id= ?";
-                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
-                    stmt.setString(1, "activa");
-                    stmt.setInt(2, cuentaOrigen);
-                    stmt.executeUpdate();
-                }else if(opcionSeleccionada == 2){
-                    // Deshabilitar cuenta
-                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ? + WHERE id= ?";
-                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
-                    stmt.setString(1, "bloqueada");
-                    stmt.setInt(2, cuentaOrigen);
-                    stmt.executeUpdate();
-                }else{
-                    //Cerrar cuenta
-                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ? + WHERE id= ?";
-                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
-                    stmt.setString(1, "cerrada");
-                    stmt.setInt(2, cuentaOrigen);
-                    stmt.executeUpdate();
-                }
-            } else{
-                System.out.println(
-                        "Ingrese la opcion deseada: \n" +
-                                "1) Habilitar cuenta \n" +
-                                "2) Deshabilitar cuenta \n" +
-                                "3) Cerrar cuenta"
-                );
-
-                int cuentaId = cuentaDtos.get(0).getId();
-                int opcionSeleccionada = sc.nextInt();
-                sc.nextLine();
-
-
-                String[] estados = new String[3];
-                estados[0] = "activa";
-                estados[1] = "bloqueada";
-                estados[2] = "cerrada";
-
-
-                if(opcionSeleccionada == 1){
-                    // Habilitar cuenta
-                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ?  WHERE id= ?";
-                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
-                    stmt.setString(1, estados[0]);
-                    stmt.setInt(2, cuentaId);
-                    stmt.executeUpdate();
-                    System.out.println("La cuenta se encuentra: " + estados[0]);
-
-                }else if(opcionSeleccionada == 2){
-                    // Deshabilitar cuenta
-                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ?  WHERE id= ?";
-                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
-                    stmt.setString(1, estados[1]);
-                    stmt.setInt(2, cuentaId);
-                    stmt.executeUpdate();
-                    System.out.println("La cuenta se encuentra: " + estados[1]);
-
-                }else{
-                    //Cerrar cuenta
-                    String habilitarCuentaSql = "UPDATE cuenta SET estado = ?  WHERE id= ?";
-                    PreparedStatement stmt= conn.prepareStatement(habilitarCuentaSql);
-                    stmt.setString(1, estados[2]);
-                    stmt.setInt(2, cuentaId);
-                    stmt.executeUpdate();
-                    System.out.println("La cuenta se encuentra: " + estados[2]);
-                }
-
-            }
-        }catch (SQLException | ErrorConexionDB e){
-            e.printStackTrace();
+        if(cuentaDtos.isEmpty()) {
+            JOptionPane.showMessageDialog(parent, "El usuario no tiene cuentas asociadas");
+            return;
         }
+
+        //Mostrar cuentas
+        String[] opciones = cuentaDtos.stream()
+                .map(c -> "Cuenta #" + c.getId() + " - $" + c.getSaldo())
+                .toArray(String[]::new);
+
+        String seleccion = (String) JOptionPane.showInputDialog(
+                parent,
+                "Seleccione una cuenta:",
+                "Gestion de cuentas",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]
+        );
+
+        if(seleccion == null) return;
+
+        int cuentaId = Integer.parseInt(seleccion.split("#")[1].split(" ")[0]);
+
+        //Elegir accion
+        String[] acciones = {"Habilitar", "Bloquear", "Cerrar"};
+        int opcion = JOptionPane.showOptionDialog(
+                parent,
+                "Seleccione una acción para la cuenta " + cuentaId,
+                "Acción",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                acciones,
+                acciones[0]
+        );
+
+        if(opcion < 0) return;
+
+        String nuevoEstado = switch (opcion) {
+            case 0 -> "activa";
+            case 1 -> "bloqueada";
+            case 2 -> "cerrada";
+            default -> "";
+        };
+
+        // Conexión a la base de datos
+        String sql = "UPDATE cuenta SET estado = ? WHERE id = ?";
+        try (Connection conn = DataBaseConexion.getInstance().getConexion();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, nuevoEstado);
+            stmt.setInt(2, cuentaId);
+
+            int filas = stmt.executeUpdate();
+            if (filas > 0) {
+                JOptionPane.showMessageDialog(parent, "La cuenta fue actualizada a estado: " + nuevoEstado);
+            } else {
+                JOptionPane.showMessageDialog(parent, "No se pudo actualizar la cuenta.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Error al actualizar cuenta: " + e.getMessage());
+        }
+
     }
 
-    @Override
-    public void verSaldo(int userId) {
+    public void verSaldo(JFrame parent, int userId) {
 
         String sql= "SELECT * FROM cuenta WHERE user_id = ?";
 
@@ -352,358 +233,325 @@ public class CuentaDaoImpl implements CuentaDao{
             ResultSet rs = stmt.executeQuery();
 
             boolean tieneDatos = false;
+            StringBuilder mensaje = new StringBuilder();
+
                 while (rs.next()) {
                     int cuentaId = rs.getInt("id");
                     double saldo = rs.getDouble("saldo");
                     String status = rs.getString("estado");
                     tieneDatos = true;
-                    System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
-                    System.out.println("Estado: " + status);
+
+                    mensaje.append("Cuenta nro: ").append(cuentaId)
+                            .append(" - Saldo disponible: $").append(saldo)
+                            .append(" - Estado: ").append(status).append("\n");
                 }
+                rs.close();
+                stmt.close();
+                conn.close();
 
                 if(!tieneDatos){
                     //Si no tiene cuenta
-                    System.out.println("Debe crear cuenta y realizar un deposito");
+                    JOptionPane.showMessageDialog(parent,
+                            "Debe crear una cuenta y realizar un depósito.",
+                                "Sin cuentas",
+                                JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    JOptionPane.showMessageDialog(parent,
+                            mensaje.toString(),
+                            "Saldos de cuentas",
+                            JOptionPane.INFORMATION_MESSAGE);
                 }
-
-
-             //Libero recursos
-             rs.close();
 
         }catch (SQLException | ErrorConexionDB e){
             e.printStackTrace();
+            JOptionPane.showMessageDialog(parent,
+                    "Error al consultar saldo: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    @Override
-    public double depositar(int userId) {
-        //Ver cuentas
-        List<CuentaDto>cuentaDtos = verCuentas(userId);
-        int cuentaOrigen;
-        boolean cuentaValida;
+    public double depositar(JFrame parent, int userId) {
 
-        try{
+        //Ver cuentas
+        List<CuentaDto>cuentaDtos = verCuentas(parent, userId);
+
+        if(cuentaDtos.isEmpty()){
+            JOptionPane.showMessageDialog(parent, "No tiene cuentas para depositar.");
+            return 0;
+        }
+
+        try {
 
             Connection conn = DataBaseConexion.getInstance().getConexion();
-            if(cuentaDtos.size() > 1){
-                do {
-                    cuentaValida = false;
-                    System.out.println("Ingrese el id de la cuenta origen");
-                    cuentaOrigen = sc.nextInt();
-                    sc.nextLine();
+            int cuentaId;
 
-                    for (CuentaDto cuenta : cuentaDtos) {
+            if (cuentaDtos.size() > 1) {
+                String[] opciones = cuentaDtos.stream()
+                        .map(c -> "Cuenta #" + c.getId() + " - Saldo: $" + c.getSaldo())
+                        .toArray(String[]::new);
 
-                        System.out.println("Comparando con cuenta ID: " + cuenta.getId());
+                String seleccion = (String) JOptionPane.showInputDialog(
+                        parent,
+                        "Seleccione una cuenta para depositar:",
+                        "Seleccionar cuenta",
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        opciones,
+                        opciones[0]
+                );
 
-                        if (cuenta.getId() == cuentaOrigen) {
-                            cuentaValida = true;
-                            System.out.println("  ¡Cuenta encontrada y validada!");
-                            break;
-                        }
-                    }
-                    if (!cuentaValida) {
-                        System.out.println("El numero de cuenta ingresado no corresponde. Vuelva a ingresarlo ");
-                    }
+                if (seleccion == null) return 0;
+                cuentaId = Integer.parseInt(seleccion.split("#")[1].split(" ")[0]);
+            } else {
+                cuentaId = cuentaDtos.get(0).getId();
+            }
 
-                }while (!cuentaValida);
+            //Solicitar monto a depositar
+            String montoStr = JOptionPane.showInputDialog(parent, "Ingrese el monto a depositar:");
+            if (montoStr == null) return 0;
 
-                System.out.println("Ingrese el monto a depositar");
-                double dinero = sc.nextDouble();
-                sc.nextLine();
+            double dinero = Double.parseDouble(montoStr);
+            if (dinero <= 0) {
+                JOptionPane.showMessageDialog(parent, "Monto inválido. Debe ser mayor a 0.");
+            }
 
-                // Depositar
-                String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
-                PreparedStatement stmtSumar = conn.prepareStatement(sqlDepositarDinero);
-                stmtSumar.setDouble(1, dinero);
-                stmtSumar.setInt(2, cuentaOrigen);
-                stmtSumar.executeUpdate();
+            //Depositar
+
+            String sqlDepositar = "UPDATE cuenta SET saldo = saldo + ? WHERE id = ?";
+            PreparedStatement stmSumar = conn.prepareStatement(sqlDepositar);
+            stmSumar.setDouble(1, dinero);
+            stmSumar.setInt(2, cuentaId);
+            stmSumar.executeUpdate();
+
+            //Registrar movimientos
+            MovimientoDto movimiento = new MovimientoDto(
+                    cuentaId,
+                    "Deposito",
+                    dinero,
+                    "Deposito realizado en cuenta"
+            );
+            movimientoDao.registrarMovimientos(movimiento);
+
+            JOptionPane.showMessageDialog(parent, "Deposito exitoso de $" +
+                    dinero +
+                    " en cuenta #" + cuentaId);
+
+            conn.close();
+        }catch (NumberFormatException e){
+            JOptionPane.showMessageDialog(parent, "Debe ingresar un número valido.",
+                    "Error de entrada", JOptionPane.ERROR_MESSAGE);
+        }catch (SQLException | ErrorConexionDB e){
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Error al realizar depósito: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        return 0;
+    }
+
+    public double retirar(JFrame parent, int userId) {
+        //Ver cuentas
+        List<CuentaDto>cuentaDtos = verCuentas(parent, userId);
+
+        if(cuentaDtos.isEmpty()){
+            JOptionPane.showMessageDialog(parent, "No tiene cuentas registradas.");
+            return 0;
+        }
+
+
+        try {
+
+            Connection conn = DataBaseConexion.getInstance().getConexion();
+            int cuentaId;
+
+            //Seleccionar cuenta si hay mas de una
+            if (cuentaDtos.size() > 1) {
+                String[] opciones = cuentaDtos.stream()
+                        .map(c -> "Cuenta #" + c.getId() + " - Saldo: $" + c.getSaldo())
+                        .toArray(String[]::new);
+
+                String seleccion = (String) JOptionPane.showInputDialog(
+                        parent,
+                        "Seleccione una cuenta para retirar:",
+                        "Seleccione cuenta",
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        opciones,
+                        opciones[0]
+                );
+
+                if (seleccion == null) return 0;
+                cuentaId = Integer.parseInt(seleccion.split("#")[1].split(" ")[0]);
+            } else {
+                cuentaId = cuentaDtos.get(0).getId();
+            }
+
+            //Validar saldo disponible
+
+            String validarSaldoSql = "SELECT * FROM cuenta WHERE id= ? AND user_id = ?";
+            PreparedStatement stmtValidar = conn.prepareStatement(validarSaldoSql);
+            stmtValidar.setInt(1, cuentaId);
+            stmtValidar.setInt(2, userId);
+            ResultSet rsVerificar = stmtValidar.executeQuery();
+
+            if (rsVerificar.next()) {
+                double saldoActual = rsVerificar.getDouble("saldo");
+
+                if (saldoActual <= 0) {
+                    JOptionPane.showMessageDialog(parent, "Saldo insuficiente en la cuenta.");
+                    return 0;
+                }
+
+                String montoStr = JOptionPane.showInputDialog(parent, "Ingrese el monto a retirar:");
+                if (montoStr == null) return 0;
+
+                double dinero = Double.parseDouble(montoStr);
+
+                if (dinero <= 0) {
+                    JOptionPane.showMessageDialog(parent, "Monto inválido. Debe ser mayor a 0.");
+                    return 0;
+                }
+
+                //Ejecutar retiro
+
+                String sqlRetirar = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
+                PreparedStatement stmtRetirar = conn.prepareStatement(sqlRetirar);
+                stmtRetirar.setDouble(1, dinero);
+                stmtRetirar.setInt(2, cuentaId);
+                stmtRetirar.executeUpdate();
 
                 //Registro de movimientos
                 MovimientoDto movimiento = new MovimientoDto(
-                        cuentaOrigen,
-                        "Deposito",
+                        cuentaId,
+                        "Retiro",
                         dinero,
-                        "Deposito realizado en cuenta"
+                        "Retiro realizado en cuenta"
                 );
 
                 movimientoDao.registrarMovimientos(movimiento);
 
-            }else {
+                JOptionPane.showMessageDialog(parent, "Se retiraron $" + dinero +
+                        "correctamente de la cuenta #" + cuentaId);
 
-                System.out.println("Ingrese el monto a depositar");
-                double dinero = sc.nextDouble();
-                sc.nextLine();
+            } else {
+                JOptionPane.showMessageDialog(parent, "No se encontro la cuenta");
+            }
+            rsVerificar.close();
+            stmtValidar.close();
+            conn.close();
 
-                int cuentaId = cuentaDtos.get(0).getId();
+        }catch (NumberFormatException e){
+            JOptionPane.showMessageDialog(parent, "Monto inválido. Debe ser un número.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }catch (SQLException | ErrorConexionDB e){
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(parent, "Error al retirar dinero: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+        return 0;
+    }
 
-                        //Depositar
-                        String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
-                        PreparedStatement stmtSumar = conn.prepareStatement(sqlDepositarDinero);
-                        stmtSumar.setDouble(1, dinero);
-                        stmtSumar.setInt(2, cuentaId);
-                        stmtSumar.executeUpdate();
+    public double transferir(JFrame parent, int userId) {
+        String sqlCuentas = "SELECT * FROM cuenta WHERE user_id = ?";
+        try (Connection conn = DataBaseConexion.getInstance().getConexion()) {
 
-                        //Registro de movimientos
-                        MovimientoDto movimiento = new MovimientoDto(
-                                cuentaId,
-                            "Deposito",
-                                dinero,
-                                "Deposito realizado en cuenta"
-                        );
-
-                    movimientoDao.registrarMovimientos(movimiento);
-                System.out.println("Saldo depositado correctamente: " + dinero + " pesos.");
-                conn.close();
+            // 1. Obtener cuentas
+            List<CuentaDto> cuentas = new ArrayList<>();
+            try (PreparedStatement stmt = conn.prepareStatement(sqlCuentas)) {
+                stmt.setInt(1, userId);
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    cuentas.add(new CuentaDto(rs.getInt("id"), rs.getDouble("saldo"), userId));
+                }
             }
 
-        }catch (SQLException | ErrorConexionDB e){
-            e.printStackTrace();
-        }
-        return 0;
-    }
+            if (cuentas.size() < 2) {
+                JOptionPane.showMessageDialog(parent, "Necesita al menos 2 cuentas para transferir.");
+                return 0;
+            }
 
-    @Override
-    public double retirar(int userId) {
-        //Ver cuentas
-        List<CuentaDto>cuentaDtos = verCuentas(userId);
-        int cuentaOrigen;
-        boolean cuentaValida;
+            // 2. Selección cuentas origen y destino
+            String[] opcionesOrigen = cuentas.stream()
+                    .map(c -> "Cuenta #" + c.getId() + " - Saldo: $" + c.getSaldo())
+                    .toArray(String[]::new);
+            String seleccionOrigen = (String) JOptionPane.showInputDialog(parent, "Seleccione cuenta origen:",
+                    "Cuenta Origen", JOptionPane.QUESTION_MESSAGE, null, opcionesOrigen, opcionesOrigen[0]);
+            if (seleccionOrigen == null) return 0;
+            int cuentaOrigenId = Integer.parseInt(seleccionOrigen.split("#")[1].split(" ")[0]);
 
-        try{
+            String[] opcionesDestino = cuentas.stream()
+                    .filter(c -> c.getId() != cuentaOrigenId)
+                    .map(c -> "Cuenta #" + c.getId() + " - Saldo: $" + c.getSaldo())
+                    .toArray(String[]::new);
+            String seleccionDestino = (String) JOptionPane.showInputDialog(parent, "Seleccione cuenta destino:",
+                    "Cuenta Destino", JOptionPane.QUESTION_MESSAGE, null, opcionesDestino, opcionesDestino[0]);
+            if (seleccionDestino == null) return 0;
+            int cuentaDestinoId = Integer.parseInt(seleccionDestino.split("#")[1].split(" ")[0]);
 
-            Connection conn = DataBaseConexion.getInstance().getConexion();
-                if(cuentaDtos.size() > 1){
-                    do {
-                        cuentaValida = false;
-                        System.out.println("Ingrese el id de la cuenta origen");
-                        cuentaOrigen = sc.nextInt();
-                        sc.nextLine();
+            // 3. Monto
+            String montoStr = JOptionPane.showInputDialog(parent, "Ingrese el monto a transferir:");
+            if (montoStr == null) return 0;
+            double dinero = Double.parseDouble(montoStr);
+            if (dinero <= 0) {
+                JOptionPane.showMessageDialog(parent, "Monto inválido. Debe ser mayor a 0.");
+                return 0;
+            }
 
-                        for (CuentaDto cuenta : cuentaDtos) {
-
-                            System.out.println("  Comparando con cuenta ID: " + cuenta.getId());
-
-                            if (cuenta.getId() == cuentaOrigen) {
-                                cuentaValida = true;
-                                System.out.println("¡Cuenta encontrada y validada!");
-                                break;
-                            }
-                        }
-                        if (!cuentaValida){
-                            System.out.println("El numero de cuenta ingresado no corresponde. Vuelva a ingresarlo ");
-                        }
-
-                    }while (!cuentaValida);
-
-                    //Validar saldo cuenta origen
-
-                    String validarSaldoSql = "SELECT * FROM cuenta WHERE id= ? AND user_id = ?";
-                    PreparedStatement stmtValidar = conn.prepareStatement(validarSaldoSql);
-                    stmtValidar.setInt(1, cuentaOrigen);
-                    stmtValidar.setInt(2, userId);
-                    ResultSet rsVerificar = stmtValidar.executeQuery();
-
-                    if(rsVerificar.next()) {
-                        double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
-
-                        if (saldoCuentaOrigen > 0) {
-                            System.out.println("Ingrese el monto a retirar");
-                            double dinero = sc.nextDouble();
-
-                            if(saldoCuentaOrigen >= dinero){
-                                //Retirar
-                                String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
-                                PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
-                                stmtRestar.setDouble(1, dinero);
-                                stmtRestar.setInt(2, cuentaOrigen);
-                                stmtRestar.executeUpdate();
-
-                                //Registro de movimientos
-                                MovimientoDto movimiento = new MovimientoDto(
-                                        cuentaOrigen,
-                                        "Retiro",
-                                        dinero,
-                                        "Retiro realizado en cuenta"
-                                );
-
-                                movimientoDao.registrarMovimientos(movimiento);
-
-                                System.out.println("Saldo retirado correctamente: " + dinero + " pesos.");
-                            }
-
-                        } else {
-                            System.out.println("No se pudo realizar la operación, saldo insuficiente");
-                        }
-                    }else{
-                        System.out.println("No se encontro la cuenta");
+            // 4. Validar saldo y hacer transferencia
+            conn.setAutoCommit(false);
+            try {
+                // Validar saldo origen
+                double saldoOrigen;
+                String validarSql = "SELECT saldo FROM cuenta WHERE id = ? AND user_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(validarSql)) {
+                    stmt.setInt(1, cuentaOrigenId);
+                    stmt.setInt(2, userId);
+                    ResultSet rs = stmt.executeQuery();
+                    if (!rs.next()) {
+                        JOptionPane.showMessageDialog(parent, "Cuenta origen no encontrada.");
+                        return 0;
                     }
-                }else {
-                    //Validar saldo cuenta origen
-
-                    String validarSaldoSql = "SELECT * FROM cuenta WHERE user_id = ?";
-                    PreparedStatement stmtValidar = conn.prepareStatement(validarSaldoSql);
-                    stmtValidar.setInt(1, userId);
-                    ResultSet rsVerificar = stmtValidar.executeQuery();
-
-                    int cuentaId = cuentaDtos.get(0).getId();
-
-                    if(rsVerificar.next()) {
-                        double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
-                        if(saldoCuentaOrigen > 0){
-                            System.out.println("Ingrese el monto a retirar");
-                            double dinero = sc.nextDouble();
-                            sc.nextLine();
-                            if(saldoCuentaOrigen >= dinero){
-                                //Retirar
-                                String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
-                                PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
-                                stmtRestar.setDouble(1, dinero);
-                                stmtRestar.setInt(2, cuentaId);
-                                stmtRestar.executeUpdate();
-
-                                //Registro de movimientos
-                                MovimientoDto movimiento = new MovimientoDto(
-                                        cuentaId,
-                                        "Retiro",
-                                        dinero,
-                                        "Retiro realizado en cuenta"
-                                );
-
-                                movimientoDao.registrarMovimientos(movimiento);
-
-                                System.out.println("Saldo retirado correctamente: " + dinero + " pesos.");
-                            }
-                        }
-                    }
-                    conn.close();
+                    saldoOrigen = rs.getDouble("saldo");
+                }
+                if (saldoOrigen < dinero) {
+                    JOptionPane.showMessageDialog(parent, "Saldo insuficiente. Disponible: $" + saldoOrigen);
+                    return 0;
                 }
 
-
-        }catch (SQLException | ErrorConexionDB e){
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    @Override
-    public double transferir(int userId) {
-
-        //Ver cuentas
-        String sql= "SELECT * FROM cuenta WHERE user_id = ?";
-        try {
-            Connection conn = DataBaseConexion.getInstance().getConexion();
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, userId);
-            ResultSet rs = stmt.executeQuery();
-
-
-                List<Integer>idCuentasUsuario = new ArrayList<>(); //Guardar las cuentas del usuario
-                while (rs.next()){
-                    int cuentaId = rs.getInt("id");
-                    double saldo = rs.getDouble("saldo");
-                    idCuentasUsuario.add(cuentaId);
-
-                    System.out.println("Cuenta nro: " + cuentaId + " tiene un saldo disponible de " + saldo + " pesos");
+                // Retirar
+                String retirarSql = "UPDATE cuenta SET saldo = saldo - ? WHERE id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(retirarSql)) {
+                    stmt.setDouble(1, dinero);
+                    stmt.setInt(2, cuentaOrigenId);
+                    stmt.executeUpdate();
                 }
 
-                int cuentaOrigen;
-                int cuentaDestino;
-
-                if(idCuentasUsuario.size() > 1){
-                    do {
-                        System.out.println("Ingrese el id de la cuenta origen");
-                        cuentaOrigen = sc.nextInt();
-
-                        if(!idCuentasUsuario.contains(cuentaOrigen)){
-                            System.out.println("El nro de cuenta ingresado no corresponde al usuario");
-                            System.out.println("Ingrese nuevamente el nro de cuenta");
-                        }
-                    }while (!idCuentasUsuario.contains(cuentaOrigen));
-
-                    do {
-                        System.out.println("Ingrese el id de la cuenta destino");
-                        cuentaDestino = sc.nextInt();
-
-                        if(!idCuentasUsuario.contains(cuentaDestino)) {
-                            System.out.println("El nro de cuenta ingresado no corresponde al usuario");
-                            System.out.println("Ingrese nuevamente el nro de cuenta");
-                        } else if (cuentaDestino == cuentaOrigen) {
-                            System.out.println("No se puede realizar esta operacion con la misma cuenta");
-                        }
-
-                    }while (!idCuentasUsuario.contains(cuentaDestino) || cuentaDestino == cuentaOrigen);
-
-                    System.out.println("Ingrese el monto a transferir");
-                    double dinero = sc.nextDouble();
-
-
-                    //Validar saldo cuenta origen
-                    String validarSaldoSql = "SELECT * FROM cuenta WHERE id= ? AND user_id = ?";
-                    PreparedStatement stmtValidar = conn.prepareStatement(validarSaldoSql);
-                    stmtValidar.setInt(1, cuentaOrigen);
-                    stmtValidar.setInt(2, userId);
-                    ResultSet rsVerificar = stmtValidar.executeQuery();
-
-                    if(rsVerificar.next()){
-                        double saldoCuentaOrigen = rsVerificar.getDouble("saldo");
-
-                        if(saldoCuentaOrigen >= dinero){
-
-                            if (conn.isClosed()) {
-                                conn = DataBaseConexion.getInstance().getConexion();
-                            }
-
-                            //Retirar
-                            String sqlRetirarDinero = "UPDATE cuenta SET saldo = saldo - ? WHERE id= ?";
-                            PreparedStatement stmtRestar = conn.prepareStatement(sqlRetirarDinero);
-                            stmtRestar.setDouble(1, dinero);
-                            stmtRestar.setInt(2, cuentaOrigen);
-                            stmtRestar.executeUpdate();
-
-                            // En la cuenta origen
-                            movimientoDao.registrarMovimientos(
-                                    new MovimientoDto(
-                                            cuentaOrigen,
-                                            "TRANSFERENCIA_ENVIADA",
-                                            dinero,
-                                            "Transferencia a cuenta " + cuentaDestino
-                                    )
-                            );
-
-                            if (conn.isClosed()) {
-                                conn = DataBaseConexion.getInstance().getConexion();
-                            }
-
-                            //Depositar
-                            String sqlDepositarDinero = "UPDATE cuenta SET saldo = saldo + ? WHERE id= ?";
-                            PreparedStatement stmtSumar = conn.prepareStatement(sqlDepositarDinero);
-                            stmtSumar.setDouble(1, dinero);
-                            stmtSumar.setInt(2, cuentaDestino);
-                            stmtSumar.executeUpdate();
-
-                            // En la cuenta destino
-                            movimientoDao.registrarMovimientos(
-                                    new MovimientoDto(
-                                            cuentaDestino,
-                                            "TRANSFERENCIA_ENVIADA",
-                                            dinero,
-                                            "Transferencia a cuenta " + cuentaOrigen
-                                    )
-                            );
-
-                            System.out.println("Transferencia exitosa de: " + dinero + " de cuenta " + cuentaOrigen
-                                    + " a cuenta " + cuentaDestino);
-                        } else {
-                            System.out.println("Solo tiene una cuenta asociada");
-                        }
-                    }
-
-                }else {
-                    System.out.println("Solo tiene una cuenta, no puede transferir");
+                // Depositar
+                String depositarSql = "UPDATE cuenta SET saldo = saldo + ? WHERE id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(depositarSql)) {
+                    stmt.setDouble(1, dinero);
+                    stmt.setInt(2, cuentaDestinoId);
+                    stmt.executeUpdate();
                 }
 
-        }catch (SQLException | ErrorConexionDB e){
+                conn.commit();
+
+                JOptionPane.showMessageDialog(parent,
+                        "Transferencia exitosa de $" + dinero +
+                                " de cuenta #" + cuentaOrigenId + " a cuenta #" + cuentaDestinoId);
+
+                return dinero;
+
+            } catch (Exception e) {
+                conn.rollback();
+                JOptionPane.showMessageDialog(parent, "Error en la transferencia: " + e.getMessage(), "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(parent, "Error de conexión: " + e.getMessage(), "Error",
+                    JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
 

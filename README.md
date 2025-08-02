@@ -4,6 +4,22 @@ Este proyecto consiste en un sistema bancario por consola desarrollado en Java. 
 
 ---
 
+Datos de prueba
+
+Empleado:
+
+email: elcuervo@gmail.com
+
+pass: 1234
+
+Cliente:
+
+email: prueba@prueba.com
+
+pass: 1234
+
+---
+
 📚 Tecnologías y herramientas utilizadas
 
 Java 17
@@ -17,6 +33,8 @@ DAO Pattern para separar lógica de acceso a datos
 Patrón Singleton para la conexión única a la base
 
 JUnit 5 para test unitarios
+
+Laragon: entorno de desarrollo
 
 ---
 

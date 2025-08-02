@@ -33,7 +33,11 @@ public class DataBaseConexion {
 
     //Metodo para obtener la conexion
 
-    public Connection getConexion() {
-        return conexion;
+    public Connection getConexion() throws ErrorConexionDB {
+        try {
+            return DriverManager.getConnection(url, users, password);
+        }catch (SQLException e){
+            throw new ErrorConexionDB("Error al conectar a la Base de datos");
+        }
     }
 }
