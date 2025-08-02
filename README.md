@@ -24,6 +24,8 @@ pass: 1234
 
 Java 17
 
+GUI: Java Swing (JFrame, JPanel, JButton, etc.)
+
 JDBC para conexión a base de datos
 
 MySQL como base de datos relacional
