@@ -7,11 +7,25 @@ import TP_Banco.dao.dto.CuentaDto;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Ventana principal para usuarios comunes del sistema bancario.
+ *
+ * <p>Permite realizar operaciones como crear cuenta, ver saldo,
+ * depositar, retirar, transferir y ver movimientos.</p>
+ */
 public class MenuUsuarioFrame extends JFrame {
     private final CuentaDaoImpl cuentaDao;
     private final MovimientoDao movimientoDao;
     private final int userId;
 
+
+    /**
+     * Constructor de la interfaz de usuario.
+     *
+     * @param cuentaDao DAO de operaciones sobre cuentas.
+     * @param movimientoDao DAO de operaciones sobre movimientos.
+     * @param userId ID del usuario logueado.
+     */
     public MenuUsuarioFrame(CuentaDaoImpl cuentaDao, MovimientoDao movimientoDao, int userId){
         this.cuentaDao = cuentaDao;
         this.movimientoDao = movimientoDao;
@@ -27,6 +41,11 @@ public class MenuUsuarioFrame extends JFrame {
         setVisible(true);
     }
 
+
+    /**
+     * Inicializa los componentes de la interfaz gráfica
+     * y define el comportamiento de los botones del menú.
+     */
     private void initUI() {
         JPanel panel = new JPanel(new GridLayout(8, 1,10,10));
 

@@ -7,10 +7,25 @@ import TP_Banco.dao.dto.LoginResult;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Interfaz gráfica para el inicio de sesión en el sistema bancario.
+ *
+ * <p>Permite al usuario ingresar su correo electrónico y contraseña.
+ * Dependiendo del rol del usuario (empleado o usuario común),
+ * redirige a la ventana correspondiente del menú principal.</p>
+ */
+
 public class LoginFrame extends JFrame {
 
     private final CuentaDaoImpl cuentaDao;
     private final MovimientoDao movimientoDao;
+
+    /**
+     * Constructor de la ventana de login.
+     *
+     * @param cuentaDao DAO para operaciones sobre cuentas.
+     * @param movimientoDao DAO para operaciones sobre movimientos.
+     */
     public LoginFrame(CuentaDaoImpl cuentaDao, MovimientoDao movimientoDao){
         this.cuentaDao = cuentaDao;
         this.movimientoDao = movimientoDao;
@@ -25,6 +40,10 @@ public class LoginFrame extends JFrame {
         setVisible(true);
     }
 
+    /**
+     * Inicializa los componentes gráficos de la ventana.
+     * Configura el formulario de ingreso y el manejo del evento de login.
+     */
     private void initUi(){
         JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
 

@@ -1,18 +1,21 @@
 package TP_Banco.dao.dto;
 
+/**
+ * Clase que representa un usuario del sistema bancario.
+ *
+ * <p>Contiene información básica como ID, nombre, correo electrónico y contraseña.</p>
+ */
+
 public class UserDto {
     private int id;
     private String name;
     private String email;
     private String pass;
 
-    private String rol;
-
     public UserDto(String name, String email, String pass) {
         this.name = name;
         this.email = email;
         this.pass = pass;
-        this.rol = "cliente";
     }
     public UserDto (){}
 
@@ -28,10 +31,6 @@ public class UserDto {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getEmail() {
         return email;
     }
@@ -44,15 +43,4 @@ public class UserDto {
         return pass;
     }
 
-    public void setPass(String pass) {
-        this.pass = pass;
-    }
-
-    public String getRol() {
-        return rol;
-    }
-
-    public void setRol(String rol) {
-        this.rol = rol;
-    }
 }

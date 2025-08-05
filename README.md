@@ -1,6 +1,6 @@
 🏦 Sistema Bancario en Java
 
-Este proyecto consiste en un sistema bancario por consola desarrollado en Java. Permite a los usuarios registrarse, iniciar sesión, gestionar cuentas, depositar, retirar, consultar saldos y transferir dinero.
+Este proyecto consiste en un sistema bancario desarrollado en Java. Permite a los usuarios iniciar sesión, gestionar cuentas, depositar, retirar, consultar saldos, transferir dinero y ver sus movimientos realizados.
 
 ---
 
@@ -13,6 +13,8 @@ email: elcuervo@gmail.com
 pass: 1234
 
 Cliente:
+
+Id: 3
 
 email: prueba@prueba.com
 
@@ -34,9 +36,9 @@ DAO Pattern para separar lógica de acceso a datos
 
 Patrón Singleton para la conexión única a la base
 
-JUnit 5 para test unitarios
+JUnit 5 para pruebas unitarios
 
-Laragon: entorno de desarrollo
+Laragon como entorno de desarrollo
 
 ---
 
@@ -50,21 +52,11 @@ Implementado en UserDao, CuentaDao, y sus clases Impl.
 
 🧵 Singleton
 
-Asegura una única instancia de conexión a la base de datos.
-
-Clase: DataBaseConexion
+Asegura una única instancia de conexión a la base de datos(DataBaseConexion)
 
 🧪 Testing
 
-Se aplicaron pruebas básicas con JUnit para testear:
-
-Login
-
-Consulta de saldos
-
-Creación de cuentas
-
-Obtener cuentas por usuario
+Pruebas básicas con JUnit para: login, consulta de saldos, creación de cuentas, obtención de cuentas por usuario.
 
 ---
 
@@ -88,11 +80,13 @@ Obtener cuentas por usuario
 
 ✅ Mensajes de error claros ante fallos
 
-✅ Visualizar transacciones realizadas
+✅ Visualizar transacciones realizadas (movimientos)
 
-✅ Gestionar cuentas de clientes
+✅ Gestionar cuentas de clientes (habilitar, bloquear, cerrar)
 
 ---
 Base de datos
 
-Se encuentra en db
+Scripts y estructura en la carpeta db
+
+Base MySQL configurada para Laragon

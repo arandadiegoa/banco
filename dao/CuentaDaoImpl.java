@@ -14,6 +14,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Implementación de la interfaz {@link CuentaDao} que gestiona las operaciones
+ * sobre cuentas bancarias utilizando JDBC y componentes Swing para la interfaz gráfica.
+ *
+ * <p>Incluye funcionalidades como login de usuario, creación de cuentas,
+ * consulta de saldo, movimientos, transferencias, retiros y depósitos.</p>
+ *
+ * <p>Usa {@link DataBaseConexion} para conectarse a la base de datos,
+ * y delega el registro de movimientos a {@link MovimientoDaoImpl}.</p>
+ *
+ * @author Diego
+ */
+
 public class CuentaDaoImpl implements CuentaDao{
     private UserDao userDao;
     private final MovimientoDao movimientoDao = new MovimientoDaoImpl();
@@ -24,7 +37,7 @@ public class CuentaDaoImpl implements CuentaDao{
     }
     public CuentaDaoImpl(){}
 
-    //Implementacion de login
+    //Inicia sesión de un usuario validando sus credenciales..
     public LoginResult login(String email, String pass){
         try {
 
@@ -41,6 +54,7 @@ public class CuentaDaoImpl implements CuentaDao{
         }
     }
 
+    // Crea una nueva cuenta bancaria para un usuario específico.
     public void crearCuenta(JFrame parent,CuentaDto cuenta) {
 
         try {
@@ -71,6 +85,8 @@ public class CuentaDaoImpl implements CuentaDao{
                     );
         }
     }
+
+    //Recupera y muestra todas las cuentas asociadas a un usuario.
     public List<CuentaDto>verCuentas(JFrame parent, int userId) {
 
         List<CuentaDto> cuentasUsuario = new ArrayList<>(); //Guardar las cuentas del usuario
@@ -115,7 +131,7 @@ public class CuentaDaoImpl implements CuentaDao{
         return cuentasUsuario;
     }
 
-
+    // Muestra los movimientos de todas las cuentas del usuario.
     public void verMovimientosUserId(JFrame parent, int userId) {
         List<CuentaDto> cuentas = verCuentas(parent, userId);
 
@@ -150,6 +166,7 @@ public class CuentaDaoImpl implements CuentaDao{
         JOptionPane.showMessageDialog(parent, scrollPane, "Movimientos de cuenta", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    //Permite a empleado gestionar el estado de las cuentas de un usuario
     public void gestionarCuentasUsuariosDesdeGUI(JFrame parent, int userId){
         //Ver cuentas
         List<CuentaDto>cuentaDtos = verCuentas(parent, userId);
@@ -222,6 +239,7 @@ public class CuentaDaoImpl implements CuentaDao{
 
     }
 
+    //Consulta y muestra el saldo de todas las cuentas del usuario
     public void verSaldo(JFrame parent, int userId) {
 
         String sql= "SELECT * FROM cuenta WHERE user_id = ?";
@@ -271,6 +289,7 @@ public class CuentaDaoImpl implements CuentaDao{
         }
     }
 
+    //Realiza un depósito en una cuenta del usuario
     public double depositar(JFrame parent, int userId) {
 
         //Ver cuentas
@@ -349,6 +368,7 @@ public class CuentaDaoImpl implements CuentaDao{
         return 0;
     }
 
+    //Permite al usuario retirar dinero de una de sus cuentas.
     public double retirar(JFrame parent, int userId) {
         //Ver cuentas
         List<CuentaDto>cuentaDtos = verCuentas(parent, userId);
@@ -452,6 +472,7 @@ public class CuentaDaoImpl implements CuentaDao{
         return 0;
     }
 
+    //Realiza una transferencia entre dos cuentas del mismo usuario.
     public double transferir(JFrame parent, int userId) {
         String sqlCuentas = "SELECT * FROM cuenta WHERE user_id = ?";
         try (Connection conn = DataBaseConexion.getInstance().getConexion()) {
