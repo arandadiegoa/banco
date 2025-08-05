@@ -16,7 +16,7 @@ public class App {
 
 
         //Iniciar GUI
-        javax.swing.SwingUtilities.invokeLater(() -> new LoginFrame(cuentaDao, movimientoDao));
+        javax.swing.SwingUtilities.invokeLater(() -> new LoginFrame(cuentaDao, movimientoDao, userDao));
 
     }
 }

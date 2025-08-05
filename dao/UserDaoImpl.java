@@ -22,9 +22,11 @@ public class UserDaoImpl implements UserDao {
 
     public UserDaoImpl(){}
 
-    //Actualmente no estoy creando usuarios
     //Crea un nuevo usuario en la base de datos.
-    public void create(UserDto user) {
+
+
+    @Override
+    public boolean create(UserDto user) {
 
         try {
             Connection conn = DataBaseConexion.getInstance().getConexion();
@@ -33,19 +35,43 @@ public class UserDaoImpl implements UserDao {
             stmt.setString(1, user.getName());
             stmt.setString(2, user.getEmail());
             stmt.setString(3, user.getPass());
+            stmt.setString(4, user.getRol());
 
             int filas = stmt.executeUpdate();
-            if (filas > 0) {
-                System.out.println("Usuario: " + user.getName() + ", se guardó de forma correcta en la BD.");
-            }
+
             stmt.close();
             conn.close();
+
+            /*
+            * Significa que si la cantidad de filas afectadas (filas) es mayor que 0 (es decir, se insertó al menos un registro),
+              el método devuelve true, indicando que la creación del usuario fue exitosa.
+               Si no, devuelve false.
+             */
+            return filas >0;
+
+        } catch (SQLException | ErrorConexionDB e) {
+            e.printStackTrace();
+            return false;
+        }
+
+    }
+
+    @Override
+    public boolean userExists(String email) {
+        String sql = "SELECT id FROM users WHERE email = ?";
+        try (Connection conn = DataBaseConexion.getInstance().getConexion();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
 
         } catch (SQLException | ErrorConexionDB e) {
             e.printStackTrace();
         }
-
+        return false;
     }
+
 
     // Busca el ID de un usuario por su email y contraseña.
     @Override

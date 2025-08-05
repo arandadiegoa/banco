@@ -2,6 +2,7 @@ package TP_Banco.ui;
 
 import TP_Banco.dao.CuentaDaoImpl;
 import TP_Banco.dao.MovimientoDao;
+import TP_Banco.dao.UserDao;
 import TP_Banco.dao.dto.LoginResult;
 
 import javax.swing.*;
@@ -20,15 +21,18 @@ public class LoginFrame extends JFrame {
     private final CuentaDaoImpl cuentaDao;
     private final MovimientoDao movimientoDao;
 
+    private final UserDao userDao;
+
     /**
      * Constructor de la ventana de login.
      *
      * @param cuentaDao DAO para operaciones sobre cuentas.
      * @param movimientoDao DAO para operaciones sobre movimientos.
      */
-    public LoginFrame(CuentaDaoImpl cuentaDao, MovimientoDao movimientoDao){
+    public LoginFrame(CuentaDaoImpl cuentaDao, MovimientoDao movimientoDao, UserDao userDao){
         this.cuentaDao = cuentaDao;
         this.movimientoDao = movimientoDao;
+        this.userDao = userDao;
 
         setTitle("Banco Boedo - Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -45,7 +49,7 @@ public class LoginFrame extends JFrame {
      * Configura el formulario de ingreso y el manejo del evento de login.
      */
     private void initUi(){
-        JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
 
         JLabel emailLabel = new JLabel("Email: ");
         JTextField emailField = new JTextField();
@@ -54,13 +58,16 @@ public class LoginFrame extends JFrame {
         JPasswordField passField = new JPasswordField();
 
         JButton loginBtn = new JButton("Iniciar sesión");
+        JButton registerBtn = new JButton("Registrarse");
 
         panel.add(emailLabel);
         panel.add(emailField);
         panel.add(passLabel);
         panel.add(passField);
-        panel.add(new JLabel()); //Espacio vacío
         panel.add(loginBtn);
+        panel.add(registerBtn);
+        panel.add(new JLabel()); //Espacio vacío
+        panel.add(new JLabel()); //Espacio vacío
 
         add(panel);
 
@@ -82,6 +89,11 @@ public class LoginFrame extends JFrame {
                     new MenuUsuarioFrame(cuentaDao, movimientoDao, result.getUserId());
                 }
             }
+        });
+
+        //Registro
+        registerBtn.addActionListener(e -> {
+            new RegistroUsuarioFrame(userDao);
         });
 
     }

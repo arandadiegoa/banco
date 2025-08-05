@@ -11,11 +11,13 @@ public class UserDto {
     private String name;
     private String email;
     private String pass;
+    private String rol;
 
-    public UserDto(String name, String email, String pass) {
+    public UserDto(String name, String email, String pass, String rol) {
         this.name = name;
         this.email = email;
         this.pass = pass;
+        this.rol = rol;
     }
     public UserDto (){}
 
@@ -43,4 +45,7 @@ public class UserDto {
         return pass;
     }
 
+    public String getRol() {
+        return rol;
+    }
 }

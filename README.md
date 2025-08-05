@@ -1,6 +1,6 @@
 🏦 Sistema Bancario en Java
 
-Este proyecto consiste en un sistema bancario desarrollado en Java. Permite a los usuarios iniciar sesión, gestionar cuentas, depositar, retirar, consultar saldos, transferir dinero y ver sus movimientos realizados.
+Este proyecto consiste en un sistema bancario desarrollado en Java. Permite a los usuarios iniciar sesión, registrarse, gestionar cuentas, depositar, retirar, consultar saldos, transferir dinero y ver sus movimientos realizados.
 
 ---
 
