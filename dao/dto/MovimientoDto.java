@@ -2,14 +2,22 @@ package TP_Banco.dao.dto;
 
 import java.sql.Timestamp;
 
+/**
+ * Clase que representa un movimiento asociado a una cuenta bancaria.
+ *
+ * <p>Incluye información como el ID del movimiento, ID de la cuenta, tipo de operación,
+ * monto, fecha y una descripción.</p>
+ */
+
 public class MovimientoDto {
     private int id;
-    private int cuentaId;
-    private String tipo;
+    private int cuentaId; //id de la cuenta asociada
+    private String tipo; //tipo de movimiento: depósito, retiro
     private double monto;
     private Timestamp fecha;
     private String description;
 
+    //Constructor para representar un movimiento existente
     public MovimientoDto(int id, int cuentaId, String tipo, double monto, Timestamp fecha, String description) {
         this.id = id;
         this.cuentaId = cuentaId;
@@ -19,7 +27,7 @@ public class MovimientoDto {
         this.description = description;
     }
 
-    //Para insertar movimientos
+    //Para insertar nuevos movimientos sin id y fecha
     public MovimientoDto(int cuentaId, String tipo, double monto, String description) {
         this.cuentaId = cuentaId;
         this.tipo = tipo;
@@ -39,39 +47,24 @@ public class MovimientoDto {
         return cuentaId;
     }
 
-    public void setCuentaId(int cuentaId) {
-        this.cuentaId = cuentaId;
-    }
 
     public String getTipo() {
         return tipo;
     }
 
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
 
     public double getMonto() {
         return monto;
     }
 
-    public void setMonto(double monto) {
-        this.monto = monto;
-    }
 
     public Timestamp getFecha() {
         return fecha;
     }
 
-    public void setFecha(Timestamp fecha) {
-        this.fecha = fecha;
-    }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }

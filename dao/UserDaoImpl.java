@@ -1,6 +1,5 @@
 package TP_Banco.dao;
 import TP_Banco.exception.ErrorConexionDB;
-import TP_Banco.dao.dto.CuentaDto;
 import TP_Banco.dao.dto.UserDto;
 import TP_Banco.db.DataBaseConexion;
 import java.sql.*;

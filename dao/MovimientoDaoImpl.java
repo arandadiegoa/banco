@@ -4,6 +4,8 @@ import TP_Banco.dao.dto.MovimientoDto;
 import TP_Banco.db.DataBaseConexion;
 import TP_Banco.exception.ErrorConexionDB;
 
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -91,19 +93,39 @@ public class MovimientoDaoImpl implements MovimientoDao {
 
         List<MovimientoDto> movimientos = obtenerTransaccionesRealizadas();
 
-        System.out.println("Transacciones realizadas por el sistema: ");
-
         if(movimientos.isEmpty()){
-            System.out.println("No se registran movimientos..");
-        }else {
-            for(MovimientoDto mov : movimientos){
-                System.out.println("[" + mov.getFecha() + "] Cuenta " + mov.getCuentaId() +
-                        " - " + mov.getTipo() + " - $" + mov.getMonto() +
-                        " (" + mov.getDescription() + ")");
-            }
+            JOptionPane.showMessageDialog(null,
+                    "No se registran movimientos.",
+                    "Información",
+                    JOptionPane.INFORMATION_MESSAGE);
         }
 
-    }
+        JFrame frame = new JFrame("Transacciones realizadas por el sistema: ");
+        frame.setSize(800, 400);
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        String[] columnas = {"ID", "Cuenta ID", "Tipo", "Monto", "Fecha", "Descripción"};
+        DefaultTableModel model = new DefaultTableModel(columnas, 0);
 
+            for(MovimientoDto mov : movimientos){
+                Object[] fila = {
+                        mov.getId(),
+                        mov.getCuentaId(),
+                        mov.getTipo(),
+                        mov.getMonto(),
+                        mov.getDescription()
+                };
+                model.addRow(fila);
+            }
+
+            //Crear JTable con el modelo
+            JTable tabla = new JTable(model);
+            JScrollPane scrollPane = new JScrollPane(tabla);
+
+            //Mostrar la tabla
+            frame.add(scrollPane);
+            frame.setVisible(true);
+        }
 }
+
